@@ -1,39 +1,35 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import models, schemas, crud
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from app.database import Base, engine
+from app.routers import admin, products, public
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
-DATABASE_URL = "postgresql://postgres:securepass@postgres:5432/ecommerce"
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-models.Base.metadata.create_all(bind=engine)
+# Créer les tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="E-commerce API")
 
+
+MEDIA_DIR = Path("app/static/images")
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=MEDIA_DIR), name="static")
+
+# CORS pour dev
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # À restreindre en prod
+    allow_origins=["*"],  # changer en prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Dépendance pour DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@app.get("/")
-def root():
+# endpoint racine
+@app.get("/api")
+def api_root():
     return {"message": "API e-commerce fonctionne !"}
 
-# Exemple endpoint produits
-@app.get("/products")
-def list_products(db=Depends(get_db)):
-    return crud.get_products(db)
+# Inclure les routers
+app.include_router(admin.router, prefix="/api/admin")
+app.include_router(products.router, prefix="/api/products")
+app.include_router(public.router, prefix="/api/public")

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-dev-svc
+  namespace: default
+spec:
+  selector:
+    app: backend-dev
+  type: NodePort
+  ports:
+    - port: 8000
+      targetPort: 8000

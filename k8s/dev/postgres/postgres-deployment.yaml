@@ -1,24 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: backend
+      app: postgres
   template:
     metadata:
       labels:
-        app: backend
+        app: postgres
     spec:
       containers:
-        - name: backend
-          image: ecommerce-backend:latest
-          imagePullPolicy: Never
+        - name: postgres
+          image: postgres:15
           env:
-            - name: DATABASE_URL
-              value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
@@ -35,4 +32,11 @@ spec:
                   name: postgres-secret
                   key: POSTGRES_DB
           ports:
-            - containerPort: 8000
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc

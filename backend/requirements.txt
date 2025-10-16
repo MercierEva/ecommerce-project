@@ -1,7 +1,23 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-psycopg2-binary
-pydantic
-python-jose
-python-dotenv
+# Framework FastAPI
+fastapi>=0.95.0,<1.0
+
+# Serveur ASGI
+uvicorn[standard]>=0.22.0,<0.23
+
+# Base de données
+sqlalchemy>=1.4.46,<2.0
+psycopg2-binary>=2.9.3,<3.0
+
+# Auth & sécurité
+passlib[bcrypt]>=1.7.4,<2.0
+bcrypt>=4.0.1,<5.0
+python-jose>=3.3.0,<4.0
+
+# Validation et formulaires
+pydantic>=1.10.7,<2.0
+pydantic[email]>=1.10.7,<2.0
+email-validator>=1.0.0,<2.0
+python-multipart>=0.0.6,<1.0
+
+# Gestion des variables d'environnement
+python-dotenv>=0.21.0,<1.0
