@@ -5,7 +5,7 @@ from app import crud, schemas, models
 from app.database import get_db
 from app.auth import get_current_admin
 
-router = APIRouter(prefix="/products", tags=["Products"])
+router = APIRouter(tags=["Products"])
 
 @router.get("/", response_model=list[schemas.Product])
 def list_products(db: Session = Depends(get_db)):

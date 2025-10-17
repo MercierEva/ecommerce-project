@@ -37,8 +37,8 @@ kubectl set image deployment/frontend-dev frontend="$FRONTEND_TAG"
 kubectl rollout status deployment/frontend-dev
 
 # Postgres, Metallb, Ingress, TLS
-kubectl apply -f "$K8S_DIR/postgres/secret.yaml"
-kubectl apply -f "$K8S_DIR/postgres/pvc.yaml"
+kubectl apply -f "$K8S_DIR/postgres/postgres-secret.yaml"
+kubectl apply -f "$K8S_DIR/postgres/postgres-pvc.yaml"
 
 kubectl apply -f "$K8S_DIR/cert-manager-clusterissuer.yaml"
 kubectl apply -f "$K8S_DIR/metallb-config.yaml"

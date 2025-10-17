@@ -14,7 +14,6 @@ RUN npm install --legacy-peer-deps \
 COPY . .
 
 # Variables d'environnement pour le build
-# (ici, tu peux adapter l’URL selon ton environnement)
 ENV REACT_APP_API_URL=http://backend-dev-svc:8000
 
 # Build de l’app
@@ -23,7 +22,7 @@ RUN npm run build
 # Étape 2 : Nginx pour servir le frontend
 FROM nginx:alpine
 
-# Copie de ta config nginx custom (avec proxy /api/)
+# Copie de la config nginx custom (avec proxy /api/)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copie du build compilé

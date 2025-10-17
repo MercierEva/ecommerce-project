@@ -7,13 +7,12 @@ from pathlib import Path
 
 # Créer les tables
 Base.metadata.create_all(bind=engine)
+IMAGES_DIR = Path("/app/static/images")
+IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="E-commerce API")
+app.mount("/static", StaticFiles(directory=Path("/app/static")), name="static")
 
-
-MEDIA_DIR = Path("app/static/images")
-MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/static", StaticFiles(directory=MEDIA_DIR), name="static")
 
 # CORS pour dev
 app.add_middleware(

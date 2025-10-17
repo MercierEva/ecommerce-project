@@ -10,8 +10,10 @@ import shutil
 from pathlib import Path
 
 router = APIRouter(tags=["Admin"])
-MEDIA_DIR = Path("app/static/images")
-MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+IMAGES_DIR = Path("/app/static/images")
+IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
+
 
 @router.post("/register", response_model=schemas.UserRead)
 def register_admin(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -37,7 +39,12 @@ async def upload_image(file: UploadFile = File(...)):
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
         return {"error": "File too large"}
-    file_path = MEDIA_DIR / file.filename
-    with file_path.open("wb") as buffer:
-        buffer.write(contents)
+    
+    # Sauvegarde dans le dossier 'images'
+    file_path = IMAGES_DIR / file.filename
+    with file_path.open("wb") as f:
+        f.write(contents)
+    
+    # URL publique : /static/images/<fichier>
     return {"filename": file.filename, "url": f"/static/images/{file.filename}"}
+
