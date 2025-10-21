@@ -1,0 +1,9 @@
+@import "@fontsource/montserrat/400.css";
+@import "@fontsource/montserrat/600.css";
+@import "@fontsource/playfair-display/700.css";
+
+body {
+  font-family: "Montserrat", sans-serif;
+  background-color: #faf8f5;
+  color: #2c2c2c;
+}

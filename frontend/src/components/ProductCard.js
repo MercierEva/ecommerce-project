@@ -1,16 +1,20 @@
 import React from "react";
+import { Card, Button } from "antd";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, onAddToCart }) {
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-lg transition p-4 flex flex-col">
-      <div className="h-48 bg-gray-200 mb-4 flex items-center justify-center text-gray-500">
-        Image
+    <Card
+      hoverable
+      cover={<img alt={product.name} src={product.image_url} style={{ height: 200, objectFit: "cover" }} />}
+      style={{ marginBottom: 16 }}
+    >
+      <Card.Meta title={product.name} description={product.description} />
+      <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontWeight: "bold", color: "#1890ff" }}>{product.price.toFixed(2)} €</span>
+        <Button type="primary" onClick={() => onAddToCart?.(product)}>
+          Ajouter
+        </Button>
       </div>
-      <h2 className="font-semibold text-lg">{product.name}</h2>
-      <p className="text-gray-700 mb-2">{product.price} €</p>
-      <button className="mt-auto bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">
-        Ajouter au panier
-      </button>
-    </div>
+    </Card>
   );
 }

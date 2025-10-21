@@ -1,6 +1,6 @@
-# backend/app/models.py
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
+from datetime import datetime
 from app.database import Base
 
 class User(Base):
@@ -12,6 +12,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
 
     products = relationship("Product", back_populates="owner")
+    orders = relationship("Order", back_populates="user")
 
 class Product(Base):
     __tablename__ = "products"
@@ -19,8 +20,31 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
-    price = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
     image_url = Column(String, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="products")
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(String, default="pending")  # pending, paid, canceled
+    total = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="orders")
+    items = relationship("OrderItem", back_populates="order", cascade="all, delete")
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
+    quantity = Column(Integer, default=1)
+    price = Column(Float)
+
+    order = relationship("Order", back_populates="items")

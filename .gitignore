@@ -3,8 +3,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-env/
-venv/
+.venv/
+.env*
 
 # Node
 node_modules/

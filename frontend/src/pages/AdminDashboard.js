@@ -1,233 +1,168 @@
 import React, { useState, useEffect } from "react";
+import {
+  Button,
+  Typography,
+  Upload,
+  List,
+  message,
+  Card,
+  Modal,
+  Form,
+  Row,
+  Space,
+} from "antd";
+import {
+  UploadOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  LogoutOutlined,
+  PlusCircleOutlined,
+} from "@ant-design/icons";
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  uploadImage,
+} from "../api/ApiClient";
 
-const BASE_URL = "https://ecommerce.dev.local/api";
+const { Title } = Typography;
 
-export default function AdminDashboard() {
-  const [token, setToken] = useState(localStorage.getItem("adminToken") || "");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [file, setFile] = useState(null);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
+export default function AdminDashboard({ user, onLogout }) {
   const [products, setProducts] = useState([]);
-
-  // ----- LOGIN ADMIN -----
-  const handleLogin = async () => {
-    try {
-      const res = await fetch(`${BASE_URL}/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.detail || "Identifiants invalides");
-        return;
-      }
-
-      setToken(data.access_token);
-      localStorage.setItem("adminToken", data.access_token);
-    } catch (err) {
-      console.error("Erreur login:", err);
-      alert("Connexion au serveur impossible");
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    setToken("");
-  };
-
-  // ----- FETCH PRODUCTS -----
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch(`${BASE_URL}/public/products`);
-      const data = await res.json();
-      setProducts(data);
-    } catch (err) {
-      console.error("Erreur fetch produits:", err);
-    }
-  };
+  const [file, setFile] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [form] = Form.useForm();
 
   useEffect(() => {
-    fetchProducts();
+    loadProducts();
   }, []);
 
-  // ----- UPLOAD IMAGE -----
-  const handleUploadImage = async () => {
-    if (!file) return null;
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch(`${BASE_URL}/admin/upload-image`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-
-    const data = await res.json();
-    if (data.error) {
-      alert(data.error);
-      return null;
+  const loadProducts = async () => {
+    try {
+      const data = await getProducts();
+      setProducts(data);
+    } catch (err) {
+      message.error("Impossible de charger les produits");
+      console.error(err);
     }
-
-    return data.url;
   };
 
-  // ----- CREATE PRODUCT -----
-  const handleCreateProduct = async () => {
-    if (!name || !description || !price || !file) {
-      alert("Tous les champs sont obligatoires");
-      return;
-    }
+  const handleSaveProduct = async (values) => {
+    try {
+      let image_url = editingProduct?.image_url;
+      if (file) image_url = await uploadImage(file);
 
-    const image_url = await handleUploadImage();
-    if (!image_url) return;
+      const payload = { ...values, price: parseFloat(values.price), image_url };
 
-    const res = await fetch(`${BASE_URL}/products/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        name,
-        description,
-        price: parseFloat(price),
-        image_url,
-      }),
-    });
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, payload);
+        message.success("Produit mis à jour !");
+      } else {
+        await createProduct(payload);
+        message.success("Produit créé !");
+      }
 
-    if (res.ok) {
-      setName("");
-      setDescription("");
-      setPrice("");
+      form.resetFields();
       setFile(null);
-      fetchProducts();
-    } else {
-      const err = await res.json();
-      alert(err.detail || "Erreur création produit");
+      setEditingProduct(null);
+      setIsModalVisible(false);
+      loadProducts();
+    } catch (err) {
+      message.error(err.message || "Erreur lors de la sauvegarde du produit");
     }
   };
 
-  // ----- DELETE PRODUCT -----
   const handleDelete = async (id) => {
     if (!window.confirm("Supprimer ce produit ?")) return;
-    const res = await fetch(`${BASE_URL}/products/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) fetchProducts();
+    try {
+      await deleteProduct(id);
+      message.success("Produit supprimé");
+      loadProducts();
+    } catch (err) {
+      message.error("Impossible de supprimer le produit");
+    }
   };
 
+  const openEditModal = (product) => {
+    setEditingProduct(product);
+    form.setFieldsValue(product);
+    setIsModalVisible(true);
+  };
+
+  const openCreateModal = () => {
+    setEditingProduct(null);
+    form.resetFields();
+    setIsModalVisible(true);
+  };
 
   return (
-    <div className="container mx-auto p-4">
-      {/* LOGIN */}
-      {!token && (
-        <div className="mb-4 border p-4 rounded shadow-md w-fit mx-auto">
-          <h2 className="text-xl font-bold mb-2 text-center">Admin Login</h2>
-          <input
-            type="email"
-            placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-1 mr-2"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            onChange={(e) => setPassword(e.target.value)}
-            className="border p-1 mr-2"
-          />
-          <button
-            onClick={handleLogin}
-            className="bg-blue-500 text-white px-3 py-1 rounded"
-          >
-            Login
-          </button>
-        </div>
-      )}
+    <div style={{ padding: "40px", backgroundColor: "#fafafa", minHeight: "100vh" }}>
+      <Row justify="space-between" align="middle" style={{ marginBottom: 30 }}>
+        <Title level={2} style={{ color: "#333" }}>
+          🖼️ Tableau de bord — Pierrot Créations
+        </Title>
+        <Space>
+          <Button type="primary" icon={<PlusCircleOutlined />} onClick={openCreateModal}>
+            Nouveau produit
+          </Button>
+          <Button danger icon={<LogoutOutlined />} onClick={onLogout}>
+            Déconnexion
+          </Button>
+        </Space>
+      </Row>
 
-      {/* DASHBOARD ADMIN */}
-      {token && (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Espace Admin</h2>
-            <button
-              onClick={handleLogout}
-              className="bg-gray-500 text-white px-3 py-1 rounded"
-            >
-              Déconnexion
-            </button>
-          </div>
-
-          {/* FORM CREATION PRODUIT */}
-          <div className="mb-6 border p-4 rounded shadow-sm">
-            <h3 className="text-lg font-semibold mb-2">Créer un produit</h3>
-            <input
-              type="text"
-              placeholder="Nom"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="border p-1 mr-2"
-            />
-            <input
-              type="text"
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="border p-1 mr-2"
-            />
-            <input
-              type="number"
-              placeholder="Prix"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="border p-1 mr-2"
-            />
-            <input
-              type="file"
-              onChange={(e) => setFile(e.target.files[0])}
-              className="border p-1 mr-2"
-            />
-            <button
-              onClick={handleCreateProduct}
-              className="bg-green-500 text-white px-2 py-1 rounded"
-            >
-              Créer
-            </button>
-          </div>
-
-          {/* LISTE PRODUITS */}
-          <h3 className="text-lg font-bold mb-2">Produits existants</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {products.map((p) => (
-              <div
-                key={p.id}
-                className="border rounded p-2 flex flex-col shadow-sm"
-              >
+      <List
+        grid={{ gutter: 16, column: 3 }}
+        dataSource={products}
+        renderItem={(p) => (
+          <List.Item>
+            <Card
+              hoverable
+              cover={
                 <img
                   src={p.image_url}
                   alt={p.name}
-                  className="h-48 object-cover mb-2"
+                  style={{ height: 220, objectFit: "cover", borderRadius: "8px" }}
                 />
-                <h3 className="font-semibold">{p.name}</h3>
-                <p>{p.price} €</p>
-                <p className="text-sm">{p.description}</p>
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="bg-red-500 text-white py-1 mt-auto rounded"
-                >
-                  Supprimer
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+              }
+              actions={[
+                <EditOutlined key="edit" onClick={() => openEditModal(p)} />,
+                <DeleteOutlined key="delete" onClick={() => handleDelete(p.id)} />,
+              ]}
+            >
+              <Card.Meta title={<b>{p.name}</b>} description={<span>{p.price} €</span>} />
+              <p style={{ marginTop: 8, color: "#666" }}>{p.description}</p>
+            </Card>
+          </List.Item>
+        )}
+      />
+
+      <Modal
+        title={editingProduct ? "Modifier le produit" : "Créer un produit"}
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <Form layout="vertical" form={form} onFinish={handleSaveProduct}>
+          <Form.Item name="name" label="Nom" rules={[{ required: true }]}>
+            <Input placeholder="Nom du produit" />
+          </Form.Item>
+          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} placeholder="Description du produit" />
+          </Form.Item>
+          <Form.Item name="price" label="Prix (€)" rules={[{ required: true }]}>
+            <Input type="number" min="0" step="0.01" />
+          </Form.Item>
+          <Upload beforeUpload={(f) => { setFile(f); return false; }} maxCount={1}>
+            <Button icon={<UploadOutlined />}>Uploader une image</Button>
+          </Upload>
+          <Button type="primary" htmlType="submit" block style={{ marginTop: 15 }}>
+            {editingProduct ? "Mettre à jour" : "Créer"}
+          </Button>
+        </Form>
+      </Modal>
     </div>
   );
 }
