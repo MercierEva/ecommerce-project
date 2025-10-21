@@ -89,7 +89,7 @@ export const registerUser = (data) =>
 export const getProducts = () => fetchApi("/products/public", {}, false);
 
 export const createProduct = (data) =>
-  fetchApi("/products", {
+  fetchApi("/products/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

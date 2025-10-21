@@ -11,6 +11,9 @@ export default function Vitrine({ onAddToCart }) {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
+  const bijoux = products.filter(p => p.category === "bijoux");
+  const tableaux = products.filter(p => p.category === "tableau");
+
 
   useEffect(() => {
     const fetchAllProducts = async () => {

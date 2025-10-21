@@ -1,15 +1,14 @@
 # backend/app/routers/admin.py
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-from sqlalchemy.orm import Session
 from pathlib import Path
-import shutil
 
 from app.auth import get_current_admin
-from app.database import get_db
 
 router = APIRouter(tags=["Admin"])
 
-IMAGES_DIR = Path("app/static/images")
+# ✅ Dossier d’upload cohérent avec main.py
+STATIC_DIR = Path("/app/static")
+IMAGES_DIR = STATIC_DIR / "images"
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 Mo
@@ -23,8 +22,11 @@ async def upload_image(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="Fichier trop volumineux")
 
-    file_path = IMAGES_DIR / file.filename
+    # Vérifie qu’il n’y a pas de caractères dangereux dans le nom
+    safe_name = file.filename.replace("..", "").replace("/", "_")
+
+    file_path = IMAGES_DIR / safe_name
     with file_path.open("wb") as f:
         f.write(contents)
 
-    return {"filename": file.filename, "url": f"/static/images/{file.filename}"}
+    return {"filename": safe_name, "url": f"/static/images/{safe_name}"}

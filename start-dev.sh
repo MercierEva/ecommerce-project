@@ -64,9 +64,9 @@ kubectl apply -f "$K8S_DIR/ecommerce-tls.yaml"
 kubectl apply -f "$K8S_DIR/ecommerce-ingress.yaml"
 
 # Nettoyer les anciennes images Docker
-docker images "backend-dev" -q | grep -v "$TIMESTAMP" | xargs -r docker rmi -f | true
-docker images "frontend-dev" -q | grep -v "$TIMESTAMP" | xargs -r docker rmi -f | true
-docker image prune -f --filter "label=dev-environment" | true
+docker images "backend-dev" -q | grep -v "$TIMESTAMP" | xargs -r docker rmi -f || true
+docker images "frontend-dev" -q | grep -v "$TIMESTAMP" | xargs -r docker rmi -f || true
+docker image prune -f --filter "label=dev-environment" || true
 
 echo ""
 echo "✅ Environnement dev prêt !"

@@ -1,3 +1,4 @@
+// src/pages/AdminDashboard.js
 import React, { useState, useEffect } from "react";
 import {
   Button,
@@ -10,6 +11,8 @@ import {
   Form,
   Row,
   Space,
+  Input,
+  Select,
 } from "antd";
 import {
   UploadOutlined,
@@ -28,7 +31,7 @@ import {
 
 const { Title } = Typography;
 
-export default function AdminDashboard({ user, onLogout }) {
+export default function AdminDashboard({ onLogout }) {
   const [products, setProducts] = useState([]);
   const [file, setFile] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -51,10 +54,15 @@ export default function AdminDashboard({ user, onLogout }) {
 
   const handleSaveProduct = async (values) => {
     try {
+
       let image_url = editingProduct?.image_url;
       if (file) image_url = await uploadImage(file);
 
-      const payload = { ...values, price: parseFloat(values.price), image_url };
+      const payload = {
+        ...values,                       // inclut name, description, category
+        price: parseFloat(values.price), // convertir le prix en float
+        image_url,                        // URL de l'image uploadée
+      };
 
       if (editingProduct) {
         await updateProduct(editingProduct.id, payload);
@@ -64,15 +72,20 @@ export default function AdminDashboard({ user, onLogout }) {
         message.success("Produit créé !");
       }
 
+
       form.resetFields();
       setFile(null);
       setEditingProduct(null);
       setIsModalVisible(false);
+
+      // 5️⃣ Recharger la liste des produits
       loadProducts();
     } catch (err) {
+      console.error(err); // log complet pour debug
       message.error(err.message || "Erreur lors de la sauvegarde du produit");
     }
   };
+
 
   const handleDelete = async (id) => {
     if (!window.confirm("Supprimer ce produit ?")) return;
@@ -155,7 +168,19 @@ export default function AdminDashboard({ user, onLogout }) {
           <Form.Item name="price" label="Prix (€)" rules={[{ required: true }]}>
             <Input type="number" min="0" step="0.01" />
           </Form.Item>
-          <Upload beforeUpload={(f) => { setFile(f); return false; }} maxCount={1}>
+          <Form.Item name="category" label="Catégorie" rules={[{ required: true }]}>
+            <Select placeholder="Choisir une catégorie">
+              <Select.Option value="bijoux">Bijoux</Select.Option>
+              <Select.Option value="tableau">Tableaux</Select.Option>
+            </Select>
+          </Form.Item>
+          <Upload
+            beforeUpload={(f) => {
+              setFile(f);
+              return false;
+            }}
+            maxCount={1}
+          >
             <Button icon={<UploadOutlined />}>Uploader une image</Button>
           </Upload>
           <Button type="primary" htmlType="submit" block style={{ marginTop: 15 }}>

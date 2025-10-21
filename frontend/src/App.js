@@ -78,7 +78,7 @@ export default function App() {
             path="/admin"
             element={
               <ProtectedRoute user={user} adminOnly={true}>
-                <AdminDashboard />
+                <AdminDashboard user={user} onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />

@@ -19,4 +19,4 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
-                  key: POSTGRES_URL  # tu peux créer cette clé dans le secret avec la full URL
+                  key: POSTGRES_URL 

@@ -21,6 +21,7 @@ class ProductBase(BaseModel):
     description: Optional[str] = None
     price: float
     image_url: str
+    category: str
 
 class ProductCreate(ProductBase):
     pass
@@ -30,6 +31,7 @@ class ProductUpdate(BaseModel):
     description: Optional[str]
     price: Optional[float]
     image_url: Optional[str]
+    category: Optional[str]
 
 class Product(ProductBase):
     id: int

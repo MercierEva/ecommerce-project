@@ -5,7 +5,7 @@ from typing import List
 from app.models import Order, OrderItem, Product
 from app.database import get_db
 from app.auth import get_current_user
-from app.config import STRIPE_SECRET_KEY, FRONTEND_URL
+from app.config import STRIPE_SECRET_KEY, FRONTEND_URL, STRIPE_WEBHOOK_SECRET
 
 router = APIRouter(tags=["Payments"])
 
@@ -77,7 +77,7 @@ def create_checkout_session(
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
-    endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+    endpoint_secret = STRIPE_WEBHOOK_SECRET
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)

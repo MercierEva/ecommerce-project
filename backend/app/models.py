@@ -23,7 +23,7 @@ class Product(Base):
     price = Column(Float, nullable=False)
     image_url = Column(String, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"))
-
+    category = Column(String, nullable=False)
     owner = relationship("User", back_populates="products")
 
 class Order(Base):
