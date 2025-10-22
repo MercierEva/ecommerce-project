@@ -9,12 +9,20 @@ export default function Cart({ cart, onRemove }) {
   const total = cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
 
   const handleCheckout = async () => {
-    if (!cart.length) return;
+    if (!cart.length) {
+      message.warning("Votre panier est vide !");
+      return;
+    }
 
     try {
+      // ✅ Envoyer sous la forme attendue par le backend
       const data = await createCheckoutSession(cart);
-      if (data.url) {
-        window.location.href = data.url;
+
+      if (data?.url) {
+        window.location.href = data.url; // redirection Stripe
+      } else if (data?.success) {
+        // mode simulation sans Stripe
+        window.location.href = `/success?order_id=${data.order_id}`;
       } else {
         message.error("Erreur lors du paiement");
       }
@@ -26,7 +34,9 @@ export default function Cart({ cart, onRemove }) {
 
   return (
     <div style={{ padding: 20 }}>
-      <Title level={2} style={{ textAlign: "center" }}>Votre Panier</Title>
+      <Title level={2} style={{ textAlign: "center" }}>
+        Votre Panier
+      </Title>
 
       {cart.length === 0 ? (
         <p style={{ textAlign: "center" }}>Votre panier est vide 🛒</p>
@@ -35,12 +45,22 @@ export default function Cart({ cart, onRemove }) {
           <List
             itemLayout="horizontal"
             dataSource={cart}
-            renderItem={item => (
+            renderItem={(item) => (
               <List.Item
-                actions={[<Button type="link" danger onClick={() => onRemove(item)}>Supprimer</Button>]}
+                actions={[
+                  <Button type="link" danger onClick={() => onRemove(item)}>
+                    Supprimer
+                  </Button>,
+                ]}
               >
                 <List.Item.Meta
-                  avatar={<img src={item.image_url} alt={item.name} style={{ width: 60, height: 60, objectFit: "cover" }} />}
+                  avatar={
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      style={{ width: 60, height: 60, objectFit: "cover" }}
+                    />
+                  }
                   title={item.name}
                   description={`${item.price.toFixed(2)} € x ${item.quantity || 1}`}
                 />
@@ -48,7 +68,9 @@ export default function Cart({ cart, onRemove }) {
             )}
           />
           <Divider />
-          <Title level={3} style={{ textAlign: "right" }}>Total : {total.toFixed(2)} €</Title>
+          <Title level={3} style={{ textAlign: "right" }}>
+            Total : {total.toFixed(2)} €
+          </Title>
           <Button type="primary" block onClick={handleCheckout}>
             Payer
           </Button>

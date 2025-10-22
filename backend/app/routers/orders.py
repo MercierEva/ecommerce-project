@@ -48,6 +48,10 @@ def list_orders(db: Session = Depends(get_db), current_user: models.User = Depen
     return orders
 
 # ----- Consulter une commande par ID -----
+@router.get("/user/my", response_model=List[schemas.Order])
+def get_my_orders(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(models.Order).filter(models.Order.user_id == current_user.id).all()
+
 @router.get("/{order_id}", response_model=schemas.Order)
 def get_order(order_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     order = db.query(models.Order).filter(models.Order.id == order_id, models.Order.user_id == current_user.id).first()
@@ -55,6 +59,3 @@ def get_order(order_id: int, db: Session = Depends(get_db), current_user: models
         raise HTTPException(status_code=404, detail="Commande introuvable")
     return order
 
-@router.get("/my")
-def get_my_orders(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(models.Order).filter(models.Order.user_id == current_user.id).all()

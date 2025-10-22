@@ -56,12 +56,15 @@ export default function AdminDashboard({ onLogout }) {
     try {
 
       let image_url = editingProduct?.image_url;
-      if (file) image_url = await uploadImage(file);
+      if (file) {
+        const uploaded = await uploadImage(file);
+        image_url = uploaded.url; 
+      }
 
       const payload = {
-        ...values,                       // inclut name, description, category
-        price: parseFloat(values.price), // convertir le prix en float
-        image_url,                        // URL de l'image uploadée
+        ...values,                       
+        price: parseFloat(values.price), 
+        image_url,                        
       };
 
       if (editingProduct) {

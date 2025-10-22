@@ -45,8 +45,8 @@ export default function Account({ user }) {
     },
     {
       title: "Montant total",
-      dataIndex: "total_price",
-      key: "total_price",
+      dataIndex: "total",
+      key: "total",
       render: price => `${price.toFixed(2)} €`,
     },
     {
@@ -55,11 +55,13 @@ export default function Account({ user }) {
       key: "status",
       render: status => {
         const color =
-          status === "livrée"
+          status === "paid"
             ? "green"
-            : status === "expédiée"
-            ? "blue"
-            : "orange";
+            : status === "pending"
+            ? "orange"
+            : status === "cancelled"
+            ? "red"
+            : "blue";
         return <Tag color={color}>{status.toUpperCase()}</Tag>;
       },
     },

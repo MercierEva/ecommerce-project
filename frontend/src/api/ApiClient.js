@@ -4,21 +4,34 @@ const BASE_URL = "https://ecommerce.dev.local/api";
 /**
  * fetchApi centralisé avec gestion automatique du token
  */
-async function fetchApi(path, options = {}, withAuth = false) {
+export async function fetchApi(path, options = {}, withAuth = false) {
   const url = `${BASE_URL}${path.startsWith("/") ? path : "/" + path}`;
   const headers = options.headers ? { ...options.headers } : {};
 
+  // 🔹 Ajout du token JWT si withAuth = true
   if (withAuth) {
     const token = localStorage.getItem("token");
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, { ...options, headers });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || `HTTP error! status: ${res.status}`);
+  // 🔹 Par défaut, les requêtes POST/PUT utilisent JSON sauf si formData
+  if (
+    !headers["Content-Type"] &&
+    !(options.body instanceof FormData)
+  ) {
+    headers["Content-Type"] = "application/json";
   }
 
+  const res = await fetch(url, { ...options, headers });
+
+  // 🔹 Gestion des erreurs HTTP
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const detail = err.detail || err.message || `HTTP ${res.status}`;
+    throw new Error(detail);
+  }
+
+  // 🔹 Parsing automatique selon le type de contenu
   const contentType = res.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {
     return await res.json();
@@ -26,12 +39,15 @@ async function fetchApi(path, options = {}, withAuth = false) {
   return await res.text();
 }
 
-// === AUTH UNIFIÉE ===
+/* ================================
+   🧩 AUTH
+================================ */
+
 export const loginUser = async ({ email, password }) => {
   try {
     // 1️⃣ Login utilisateur standard
     const formData = new URLSearchParams();
-    formData.append("username", email); // correspond à OAuth2PasswordRequestForm
+    formData.append("username", email); // OAuth2PasswordRequestForm
     formData.append("password", password);
 
     const data = await fetchApi("/users/login", {
@@ -43,7 +59,6 @@ export const loginUser = async ({ email, password }) => {
     localStorage.setItem("token", data.access_token);
     localStorage.setItem("is_admin", data.user?.is_admin ? "true" : "false");
 
-    // Récupération complète de l'utilisateur
     const userInfo = await getMe();
     return { access_token: data.access_token, user: userInfo };
   } catch {
@@ -57,7 +72,6 @@ export const loginUser = async ({ email, password }) => {
     localStorage.setItem("token", res.access_token);
     localStorage.setItem("is_admin", "true");
 
-    // Pour admin, on renvoie les infos depuis le token (pas de /admin/me)
     return { access_token: res.access_token, user: { email, is_admin: true } };
   }
 };
@@ -67,82 +81,80 @@ export const logoutUser = () => {
   localStorage.removeItem("is_admin");
 };
 
-// getMe corrigé : retourne null si pas de user ou admin
 export const getMe = async () => {
   try {
-    const res = await fetchApi("/users/me", {}, true);
-    return res;
+    return await fetchApi("/users/me", {}, true);
   } catch {
-    return null; // permet d'éviter la 401 pour les admins
+    return null;
   }
 };
 
-// === USERS ===
+/* ================================
+   🧩 USERS
+================================ */
+
 export const registerUser = (data) =>
   fetchApi("/users/register", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 
-// === PRODUITS ===
-export const getProducts = () => fetchApi("/products/public", {}, false);
+/* ================================
+   🧩 PRODUITS
+================================ */
+
+export const getProducts = () => fetchApi("/products/public");
 
 export const createProduct = (data) =>
-  fetchApi("/products/", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  }, true);
+  fetchApi(
+    "/products/",
+    { method: "POST", body: JSON.stringify(data) },
+    true
+  );
 
 export const updateProduct = (id, data) =>
-  fetchApi(`/products/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  }, true);
+  fetchApi(
+    `/products/${id}`,
+    { method: "PUT", body: JSON.stringify(data) },
+    true
+  );
 
 export const deleteProduct = (id) =>
   fetchApi(`/products/${id}`, { method: "DELETE" }, true);
 
-// === IMAGE UPLOAD ===
-export const uploadImage = async (file) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Token manquant");
+/* ================================
+   🧩 UPLOAD IMAGE
+================================ */
 
+export const uploadImage = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
-
-  const res = await fetch(`${BASE_URL}/admin/upload-image`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Erreur upload image");
-  return data.url;
+  return await fetchApi("/admin/upload-image", { method: "POST", body: formData }, true);
 };
 
-// === COMMANDES ===
-export const getMyOrders = () => fetchApi("/orders/my", {}, true);
+/* ================================
+   🧩 COMMANDES
+================================ */
 
-// === CHECKOUT ===
+export const getMyOrders = () => fetchApi("/orders/user/my", {}, true);
+
+/* ================================
+   💳 PAIEMENT / STRIPE
+================================ */
+
+/**
+ * Crée une session Stripe Checkout (ou simule le paiement)
+ * @param {Array} cartItems  Liste des produits du panier [{id, name, price, quantity}]
+ */
 export const createCheckoutSession = async (cartItems) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Utilisateur non connecté");
-
-  const res = await fetch(`${BASE_URL}/checkout/create-session`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+  // ✅ on passe directement le tableau, fetchApi s'occupe du JSON.stringify et de l'enrobage
+  return await fetchApi(
+    "/payments/create-checkout-session",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: cartItems }), 
     },
-    body: JSON.stringify({ items: cartItems }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Erreur lors de la création de la session de paiement");
-
-  return data; 
+    true // inclure le token utilisateur
+  );
 };

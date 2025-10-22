@@ -11,7 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Cart from "./pages/Cart";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import Cancel from "./pages/Cancel"; 
 import { getMe } from "./api/ApiClient";
 
 export default function App() {
@@ -71,6 +71,7 @@ export default function App() {
             element={<Cart cart={cart} onRemove={handleRemoveFromCart} token={localStorage.getItem("token")} />}
           />
           <Route path="/success" element={<Success />} />
+          <Route path="/cancel" element={<Cancel />} />
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/account" element={<Account user={user} />} />

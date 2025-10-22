@@ -1,30 +1,42 @@
 import stripe
 from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
-from typing import List
-from app.models import Order, OrderItem, Product
+from typing import Dict, Any
+from fastapi.responses import RedirectResponse
+
+from app.models import Order, OrderItem
 from app.database import get_db
 from app.auth import get_current_user
 from app.config import STRIPE_SECRET_KEY, FRONTEND_URL, STRIPE_WEBHOOK_SECRET
 
 router = APIRouter(tags=["Payments"])
 
-# Clé Stripe
-stripe.api_key = STRIPE_SECRET_KEY
+# 🔹 Clé Stripe
+if STRIPE_SECRET_KEY:
+    stripe.api_key = STRIPE_SECRET_KEY
+else:
+    print("⚠️ Aucune clé Stripe configurée !")
 
 @router.post("/create-checkout-session")
 def create_checkout_session(
-    cart: List[dict],  # [{"id": 1, "name": "Peinture", "price": 120, "quantity": 1}]
+    body: Dict[str, Any],
     request: Request,
     db: Session = Depends(get_db),
-    user = Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
+    """
+    Crée une session Stripe Checkout à partir du panier utilisateur.
+    Le frontend envoie un JSON : {"items": [{id, name, price, quantity}]}
+    """
+    cart = body.get("items", [])
     if not cart:
         raise HTTPException(status_code=400, detail="Panier vide")
 
-    # Calcul total et création de la commande
+    # 🔸 Calcul du total
     total = sum(item["price"] * item.get("quantity", 1) for item in cart)
-    order = Order(user_id=user.id, total=total)
+
+    # 🔸 Création de la commande dans la base
+    order = Order(user_id=user.id, total=total, status="pending")
     db.add(order)
     db.commit()
     db.refresh(order)
@@ -34,11 +46,12 @@ def create_checkout_session(
             order_id=order.id,
             product_id=item["id"],
             quantity=item.get("quantity", 1),
-            price=item["price"]
+            price=item["price"],
         )
         db.add(order_item)
     db.commit()
 
+    # 🔹 Préparation des items pour Stripe
     line_items = [
         {
             "price_data": {
@@ -47,14 +60,11 @@ def create_checkout_session(
                 "unit_amount": int(item["price"] * 100),
             },
             "quantity": item.get("quantity", 1),
-        } for item in cart
+        }
+        for item in cart
     ]
 
-    # Générer dynamiquement les URLs front
-    frontend_base = FRONTEND_URL # optionnel, peut être None
-    if not frontend_base:
-        # Si variable non définie, on construit depuis la requête (utile en dev)
-        frontend_base = f"{request.url.scheme}://{request.headers['host']}"
+    frontend_base = FRONTEND_URL or f"{request.url.scheme}://{request.headers['host']}"
 
     try:
         session = stripe.checkout.Session.create(
@@ -66,15 +76,21 @@ def create_checkout_session(
             cancel_url=f"{frontend_base}/cancel",
             metadata={"order_id": str(order.id)},
         )
+
         order.stripe_session_id = session.id
         db.commit()
         return {"url": session.url}
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("❌ Erreur Stripe:", str(e))
+        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}")
 
 
 @router.post("/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    """
+    Webhook Stripe — met à jour le statut de commande quand le paiement est réussi.
+    """
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
     endpoint_secret = STRIPE_WEBHOOK_SECRET
@@ -82,6 +98,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except Exception as e:
+        print("❌ Webhook invalide:", str(e))
         raise HTTPException(status_code=400, detail=str(e))
 
     if event["type"] == "checkout.session.completed":
@@ -91,5 +108,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         if order:
             order.status = "paid"
             db.commit()
+            print(f"✅ Paiement validé pour commande {order.id}")
 
     return {"status": "success"}
