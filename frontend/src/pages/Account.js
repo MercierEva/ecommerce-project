@@ -1,11 +1,13 @@
-// src/pages/Account.js
+// src/pages/Account.jsx
 import React, { useEffect, useState } from "react";
 import { Card, Table, Tag, Typography, Spin, message } from "antd";
 import { getMyOrders } from "../api/ApiClient";
+import { useAuth } from "../context/AuthContext";
 
 const { Title, Text } = Typography;
 
-export default function Account({ user }) {
+export default function Account() {
+  const { user } = useAuth(); // ✅ récupère l'utilisateur depuis le context
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 

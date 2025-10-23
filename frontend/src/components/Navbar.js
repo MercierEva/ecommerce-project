@@ -1,12 +1,24 @@
 import React from "react";
-import { Layout, Menu, Badge, Button, Dropdown } from "antd";
-import { ShoppingCartOutlined, UserOutlined, LogoutOutlined } from "@ant-design/icons";
+import { Layout, Menu, Badge, Button, Dropdown, Typography } from "antd";
+import {
+  ShoppingCartOutlined,
+  UserOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 const { Header } = Layout;
+const { Text } = Typography;
 
-export default function Navbar({ cartCount = 0, user, onLogout }) {
+export default function Navbar() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { cart } = useCart();
+
+  // 🔹 Compter les articles dans le panier
+  const cartCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   // 🔒 Menu utilisateur
   const userMenu = {
@@ -26,7 +38,7 @@ export default function Navbar({ cartCount = 0, user, onLogout }) {
             type="link"
             danger
             icon={<LogoutOutlined />}
-            onClick={onLogout}
+            onClick={logout}
             style={{ padding: 0 }}
           >
             Se déconnecter
@@ -76,6 +88,7 @@ export default function Navbar({ cartCount = 0, user, onLogout }) {
           <Link to="/">Vitrine</Link>
         </Menu.Item>
 
+        {/* 🛒 Icône panier */}
         <Menu.Item key="cart" style={{ marginLeft: "10px" }}>
           <Link to="/cart">
             <Badge count={cartCount} size="small">
@@ -84,7 +97,7 @@ export default function Navbar({ cartCount = 0, user, onLogout }) {
           </Link>
         </Menu.Item>
 
-        {/* 👤 Si connecté → menu utilisateur, sinon boutons Login/Register */}
+        {/* 👤 Utilisateur connecté */}
         {user ? (
           <Menu.Item key="user" style={{ marginLeft: "15px" }}>
             <Dropdown menu={userMenu} placement="bottomRight" arrow>
@@ -93,7 +106,7 @@ export default function Navbar({ cartCount = 0, user, onLogout }) {
                 icon={<UserOutlined />}
                 style={{ color: "#2c2c2c", fontWeight: "500" }}
               >
-                {user.email}
+                <Text>{user.email}</Text>
               </Button>
             </Dropdown>
           </Menu.Item>

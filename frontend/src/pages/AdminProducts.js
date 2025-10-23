@@ -1,24 +1,23 @@
-// src/pages/AdminProducts.js
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Button,
-  Typography,
-  Upload,
+  Row,
   List,
-  message,
   Card,
+  Button,
   Modal,
   Form,
-  Row,
-  Space,
   Input,
   Select,
+  Upload,
+  message,
+  Typography,
+  Space,
 } from "antd";
 import {
-  UploadOutlined,
+  PlusCircleOutlined,
   EditOutlined,
   DeleteOutlined,
-  PlusCircleOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import {
   getProducts,
@@ -32,6 +31,7 @@ const { Title } = Typography;
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -43,10 +43,38 @@ export default function AdminProducts() {
 
   const loadProducts = async () => {
     try {
+      setLoading(true);
       const data = await getProducts();
       setProducts(data);
     } catch (err) {
       message.error("Impossible de charger les produits");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openCreateModal = () => {
+    setEditingProduct(null);
+    form.resetFields();
+    setFile(null);
+    setIsModalVisible(true);
+  };
+
+  const openEditModal = (product) => {
+    setEditingProduct(product);
+    form.setFieldsValue(product);
+    setIsModalVisible(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Supprimer ce produit ?")) return;
+    try {
+      await deleteProduct(id);
+      message.success("Produit supprimé !");
+      loadProducts();
+    } catch (err) {
+      message.error("Impossible de supprimer le produit");
     }
   };
 
@@ -58,11 +86,7 @@ export default function AdminProducts() {
         image_url = uploaded.url;
       }
 
-      const payload = {
-        ...values,
-        price: parseFloat(values.price),
-        image_url,
-      };
+      const payload = { ...values, price: parseFloat(values.price), image_url };
 
       if (editingProduct) {
         await updateProduct(editingProduct.id, payload);
@@ -83,30 +107,11 @@ export default function AdminProducts() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Supprimer ce produit ?")) return;
-    try {
-      await deleteProduct(id);
-      message.success("Produit supprimé");
-      loadProducts();
-    } catch {
-      message.error("Erreur lors de la suppression");
-    }
-  };
-
   return (
     <div>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 30 }}>
-        <Title level={3}>Produits</Title>
-        <Button
-          type="primary"
-          icon={<PlusCircleOutlined />}
-          onClick={() => {
-            form.resetFields();
-            setEditingProduct(null);
-            setIsModalVisible(true);
-          }}
-        >
+      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
+        <Title level={2}>Gestion des produits</Title>
+        <Button type="primary" icon={<PlusCircleOutlined />} onClick={openCreateModal}>
           Nouveau produit
         </Button>
       </Row>
@@ -114,30 +119,18 @@ export default function AdminProducts() {
       <List
         grid={{ gutter: 16, column: 3 }}
         dataSource={products}
+        loading={loading}
         renderItem={(p) => (
           <List.Item>
             <Card
-              cover={
-                <img
-                  src={p.image_url}
-                  alt={p.name}
-                  style={{ height: 220, objectFit: "cover", borderRadius: "8px" }}
-                />
-              }
+              hoverable
+              cover={<img src={p.image_url} alt={p.name} style={{ height: 220, objectFit: "cover", borderRadius: 8 }} />}
               actions={[
-                <EditOutlined key="edit" onClick={() => {
-                  setEditingProduct(p);
-                  form.setFieldsValue(p);
-                  setIsModalVisible(true);
-                }} />,
+                <EditOutlined key="edit" onClick={() => openEditModal(p)} />,
                 <DeleteOutlined key="delete" onClick={() => handleDelete(p.id)} />,
               ]}
             >
-              <Card.Meta
-                title={<b>{p.name}</b>}
-                description={<span>{p.price} €</span>}
-              />
-              <p style={{ marginTop: 8, color: "#666" }}>{p.description}</p>
+              <Card.Meta title={p.name} description={`${p.price} €`} />
             </Card>
           </List.Item>
         )}
@@ -149,12 +142,12 @@ export default function AdminProducts() {
         onCancel={() => setIsModalVisible(false)}
         footer={null}
       >
-        <Form layout="vertical" form={form} onFinish={handleSaveProduct}>
+        <Form form={form} layout="vertical" onFinish={handleSaveProduct}>
           <Form.Item name="name" label="Nom" rules={[{ required: true }]}>
-            <Input />
+            <Input placeholder="Nom du produit" />
           </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} />
+          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} placeholder="Description du produit" />
           </Form.Item>
           <Form.Item name="price" label="Prix (€)" rules={[{ required: true }]}>
             <Input type="number" min="0" step="0.01" />
@@ -165,7 +158,7 @@ export default function AdminProducts() {
               <Select.Option value="tableau">Tableaux</Select.Option>
             </Select>
           </Form.Item>
-          <Upload beforeUpload={(f) => (setFile(f), false)} maxCount={1}>
+          <Upload beforeUpload={(f) => { setFile(f); return false; }} maxCount={1}>
             <Button icon={<UploadOutlined />}>Uploader une image</Button>
           </Upload>
           <Button type="primary" htmlType="submit" block style={{ marginTop: 15 }}>

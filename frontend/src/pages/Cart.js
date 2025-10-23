@@ -2,10 +2,12 @@
 import React from "react";
 import { List, Button, Typography, Divider, message } from "antd";
 import { createCheckoutSession } from "../api/ApiClient";
+import { useCart } from "../context/CartContext";
 
 const { Title } = Typography;
 
-export default function Cart({ cart, onRemove }) {
+export default function Cart() {
+  const { cart, removeFromCart, clearCart } = useCart(); // ✅ context
   const total = cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
 
   const handleCheckout = async () => {
@@ -15,13 +17,10 @@ export default function Cart({ cart, onRemove }) {
     }
 
     try {
-      // ✅ Envoyer sous la forme attendue par le backend
       const data = await createCheckoutSession(cart);
-
       if (data?.url) {
-        window.location.href = data.url; // redirection Stripe
+        window.location.href = data.url;
       } else if (data?.success) {
-        // mode simulation sans Stripe
         window.location.href = `/success?order_id=${data.order_id}`;
       } else {
         message.error("Erreur lors du paiement");
@@ -33,7 +32,7 @@ export default function Cart({ cart, onRemove }) {
   };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 20, maxWidth: 800, margin: "auto" }}>
       <Title level={2} style={{ textAlign: "center" }}>
         Votre Panier
       </Title>
@@ -48,7 +47,7 @@ export default function Cart({ cart, onRemove }) {
             renderItem={(item) => (
               <List.Item
                 actions={[
-                  <Button type="link" danger onClick={() => onRemove(item)}>
+                  <Button type="link" danger onClick={() => removeFromCart(item.id)}>
                     Supprimer
                   </Button>,
                 ]}
@@ -73,6 +72,9 @@ export default function Cart({ cart, onRemove }) {
           </Title>
           <Button type="primary" block onClick={handleCheckout}>
             Payer
+          </Button>
+          <Button block onClick={clearCart} style={{ marginTop: 10 }}>
+            Vider le panier
           </Button>
         </>
       )}

@@ -2,19 +2,23 @@ import React, { useState } from "react";
 import { Form, Input, Button, Typography, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../api/ApiClient";
+import { useAuth } from "../context/AuthContext";
+
 
 const { Title } = Typography;
 
 export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
       await registerUser(values);
       message.success("Compte créé avec succès !");
-      navigate("/login");
+      await login(values.email, values.password); // connexion automatique
+      navigate("/");
     } catch (err) {
       message.error(err.message || "Erreur à l'inscription");
     } finally {
@@ -41,7 +45,7 @@ export default function Register() {
           <Input.Password />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading} block>
+          <Button type="primary" htmlType="submit" loading={loading}  disabled={loading} block>
             S’inscrire
           </Button>
         </Form.Item>

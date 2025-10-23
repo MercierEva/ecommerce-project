@@ -1,26 +1,25 @@
-// src/components/Vitrine.js
+// src/pages/Home.js
 import React, { useEffect, useState } from "react";
 import { Card, Row, Col, Button, Typography, Select, message } from "antd";
 import { getProducts } from "../api/ApiClient";
+import { useCart } from "../context/CartContext";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-export default function Vitrine({ onAddToCart }) {
+export default function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
-  const bijoux = products.filter(p => p.category === "bijoux");
-  const tableaux = products.filter(p => p.category === "tableau");
-
+  const { addToCart } = useCart(); // ✅ utilisation du context
 
   useEffect(() => {
     const fetchAllProducts = async () => {
       try {
-        const data = await getProducts(); // utilisation de ApiClient.js
+        const data = await getProducts();
         setProducts(data);
-        const cats = Array.from(new Set(data.map(p => p.category).filter(Boolean)));
+        const cats = Array.from(new Set(data.map((p) => p.category).filter(Boolean)));
         setCategories(cats);
       } catch (err) {
         console.error("Erreur de chargement produits:", err);
@@ -36,7 +35,7 @@ export default function Vitrine({ onAddToCart }) {
   const filteredProducts =
     selectedCategory === "all"
       ? products
-      : products.filter(p => p.category === selectedCategory);
+      : products.filter((p) => p.category === selectedCategory);
 
   if (loading) {
     return (
@@ -58,7 +57,7 @@ export default function Vitrine({ onAddToCart }) {
         style={{ marginBottom: 30, width: 200 }}
       >
         <Option value="all">Toutes catégories</Option>
-        {categories.map(c => (
+        {categories.map((c) => (
           <Option key={c} value={c}>
             {c}
           </Option>
@@ -66,7 +65,7 @@ export default function Vitrine({ onAddToCart }) {
       </Select>
 
       <Row gutter={[24, 24]}>
-        {filteredProducts.map(p => (
+        {filteredProducts.map((p) => (
           <Col xs={24} sm={12} md={8} key={p.id}>
             <Card
               hoverable
@@ -87,7 +86,7 @@ export default function Vitrine({ onAddToCart }) {
               <Button
                 type="primary"
                 style={{ marginTop: 12 }}
-                onClick={() => onAddToCart(p)}
+                onClick={() => addToCart(p)} // ✅ plus besoin de prop
               >
                 Ajouter au panier
               </Button>
