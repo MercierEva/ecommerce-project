@@ -1,4 +1,4 @@
-// src/pages/AdminDashboard.js
+// src/pages/AdminProducts.js
 import React, { useState, useEffect } from "react";
 import {
   Button,
@@ -18,7 +18,6 @@ import {
   UploadOutlined,
   EditOutlined,
   DeleteOutlined,
-  LogoutOutlined,
   PlusCircleOutlined,
 } from "@ant-design/icons";
 import {
@@ -31,7 +30,7 @@ import {
 
 const { Title } = Typography;
 
-export default function AdminDashboard({ onLogout }) {
+export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [file, setFile] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -48,23 +47,21 @@ export default function AdminDashboard({ onLogout }) {
       setProducts(data);
     } catch (err) {
       message.error("Impossible de charger les produits");
-      console.error(err);
     }
   };
 
   const handleSaveProduct = async (values) => {
     try {
-
       let image_url = editingProduct?.image_url;
       if (file) {
         const uploaded = await uploadImage(file);
-        image_url = uploaded.url; 
+        image_url = uploaded.url;
       }
 
       const payload = {
-        ...values,                       
-        price: parseFloat(values.price), 
-        image_url,                        
+        ...values,
+        price: parseFloat(values.price),
+        image_url,
       };
 
       if (editingProduct) {
@@ -75,20 +72,16 @@ export default function AdminDashboard({ onLogout }) {
         message.success("Produit créé !");
       }
 
-
       form.resetFields();
       setFile(null);
       setEditingProduct(null);
       setIsModalVisible(false);
-
-      // 5️⃣ Recharger la liste des produits
       loadProducts();
     } catch (err) {
-      console.error(err); // log complet pour debug
+      console.error(err);
       message.error(err.message || "Erreur lors de la sauvegarde du produit");
     }
   };
-
 
   const handleDelete = async (id) => {
     if (!window.confirm("Supprimer ce produit ?")) return;
@@ -96,37 +89,26 @@ export default function AdminDashboard({ onLogout }) {
       await deleteProduct(id);
       message.success("Produit supprimé");
       loadProducts();
-    } catch (err) {
-      message.error("Impossible de supprimer le produit");
+    } catch {
+      message.error("Erreur lors de la suppression");
     }
   };
 
-  const openEditModal = (product) => {
-    setEditingProduct(product);
-    form.setFieldsValue(product);
-    setIsModalVisible(true);
-  };
-
-  const openCreateModal = () => {
-    setEditingProduct(null);
-    form.resetFields();
-    setIsModalVisible(true);
-  };
-
   return (
-    <div style={{ padding: "40px", backgroundColor: "#fafafa", minHeight: "100vh" }}>
+    <div>
       <Row justify="space-between" align="middle" style={{ marginBottom: 30 }}>
-        <Title level={2} style={{ color: "#333" }}>
-          🖼️ Tableau de bord — Pierrot Créations
-        </Title>
-        <Space>
-          <Button type="primary" icon={<PlusCircleOutlined />} onClick={openCreateModal}>
-            Nouveau produit
-          </Button>
-          <Button danger icon={<LogoutOutlined />} onClick={onLogout}>
-            Déconnexion
-          </Button>
-        </Space>
+        <Title level={3}>Produits</Title>
+        <Button
+          type="primary"
+          icon={<PlusCircleOutlined />}
+          onClick={() => {
+            form.resetFields();
+            setEditingProduct(null);
+            setIsModalVisible(true);
+          }}
+        >
+          Nouveau produit
+        </Button>
       </Row>
 
       <List
@@ -135,7 +117,6 @@ export default function AdminDashboard({ onLogout }) {
         renderItem={(p) => (
           <List.Item>
             <Card
-              hoverable
               cover={
                 <img
                   src={p.image_url}
@@ -144,11 +125,18 @@ export default function AdminDashboard({ onLogout }) {
                 />
               }
               actions={[
-                <EditOutlined key="edit" onClick={() => openEditModal(p)} />,
+                <EditOutlined key="edit" onClick={() => {
+                  setEditingProduct(p);
+                  form.setFieldsValue(p);
+                  setIsModalVisible(true);
+                }} />,
                 <DeleteOutlined key="delete" onClick={() => handleDelete(p.id)} />,
               ]}
             >
-              <Card.Meta title={<b>{p.name}</b>} description={<span>{p.price} €</span>} />
+              <Card.Meta
+                title={<b>{p.name}</b>}
+                description={<span>{p.price} €</span>}
+              />
               <p style={{ marginTop: 8, color: "#666" }}>{p.description}</p>
             </Card>
           </List.Item>
@@ -163,10 +151,10 @@ export default function AdminDashboard({ onLogout }) {
       >
         <Form layout="vertical" form={form} onFinish={handleSaveProduct}>
           <Form.Item name="name" label="Nom" rules={[{ required: true }]}>
-            <Input placeholder="Nom du produit" />
+            <Input />
           </Form.Item>
-          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
-            <Input.TextArea rows={3} placeholder="Description du produit" />
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={3} />
           </Form.Item>
           <Form.Item name="price" label="Prix (€)" rules={[{ required: true }]}>
             <Input type="number" min="0" step="0.01" />
@@ -177,13 +165,7 @@ export default function AdminDashboard({ onLogout }) {
               <Select.Option value="tableau">Tableaux</Select.Option>
             </Select>
           </Form.Item>
-          <Upload
-            beforeUpload={(f) => {
-              setFile(f);
-              return false;
-            }}
-            maxCount={1}
-          >
+          <Upload beforeUpload={(f) => (setFile(f), false)} maxCount={1}>
             <Button icon={<UploadOutlined />}>Uploader une image</Button>
           </Upload>
           <Button type="primary" htmlType="submit" block style={{ marginTop: 15 }}>

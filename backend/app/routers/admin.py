@@ -1,8 +1,11 @@
 # backend/app/routers/admin.py
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from pathlib import Path
-
+from app import models, schemas
+from sqlalchemy.orm import Session
+from app.database import get_db
 from app.auth import get_current_admin
+from typing import List
 
 router = APIRouter(tags=["Admin"])
 
@@ -30,3 +33,8 @@ async def upload_image(
         f.write(contents)
 
     return {"filename": safe_name, "url": f"/static/images/{safe_name}"}
+
+
+@router.get("/orders", response_model=List[schemas.Order])
+async def get_all_orders(db: Session = Depends(get_db), current_admin=Depends(get_current_admin)):
+    return db.query(models.Order).all()

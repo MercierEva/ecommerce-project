@@ -158,3 +158,8 @@ export const createCheckoutSession = async (cartItems) => {
     true // inclure le token utilisateur
   );
 };
+
+/* ================================
+   🧩 COMMANDES ADMIN
+================================ */
+export const getAllOrders = () => fetchApi("/admin/orders", {}, true);
