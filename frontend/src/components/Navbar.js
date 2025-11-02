@@ -1,10 +1,6 @@
 import React from "react";
 import { Layout, Menu, Badge, Button, Dropdown, Typography } from "antd";
-import {
-  ShoppingCartOutlined,
-  UserOutlined,
-  LogoutOutlined,
-} from "@ant-design/icons";
+import { ShoppingCartOutlined, UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -27,10 +23,6 @@ export default function Navbar() {
         key: "account",
         label: <Link to="/account">Mon compte</Link>,
       },
-      user?.is_admin && {
-        key: "admin",
-        label: <Link to="/admin">Administration</Link>,
-      },
       {
         key: "logout",
         label: (
@@ -45,7 +37,7 @@ export default function Navbar() {
           </Button>
         ),
       },
-    ].filter(Boolean),
+    ],
   };
 
   return (

@@ -38,3 +38,4 @@ async def upload_image(
 @router.get("/orders", response_model=List[schemas.Order])
 async def get_all_orders(db: Session = Depends(get_db), current_admin=Depends(get_current_admin)):
     return db.query(models.Order).all()
+

@@ -42,39 +42,25 @@ export async function fetchApi(path, options = {}, withAuth = false) {
 /* ================================
    🧩 AUTH
 ================================ */
-
 export const loginUser = async ({ email, password }) => {
-  try {
-    // 1️⃣ Login utilisateur standard
-    const formData = new URLSearchParams();
-    formData.append("username", email); // OAuth2PasswordRequestForm
-    formData.append("password", password);
+  // Login standard utilisateur/admin
+  const formData = new URLSearchParams();
+  formData.append("username", email);
+  formData.append("password", password);
 
-    const data = await fetchApi("/users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formData,
-    });
+  const data = await fetchApi("/users/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: formData,
+  });
 
-    localStorage.setItem("token", data.access_token);
-    localStorage.setItem("is_admin", data.user?.is_admin ? "true" : "false");
+  localStorage.setItem("token", data.access_token);
+  localStorage.setItem("is_admin", data.user?.is_admin ? "true" : "false");
 
-    const userInfo = await getMe();
-    return { access_token: data.access_token, user: userInfo };
-  } catch {
-    // 2️⃣ Fallback login admin
-    const res = await fetchApi("/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    localStorage.setItem("token", res.access_token);
-    localStorage.setItem("is_admin", "true");
-
-    return { access_token: res.access_token, user: { email, is_admin: true } };
-  }
+  const userInfo = await getMe();
+  return { access_token: data.access_token, user: userInfo };
 };
+
 
 export const logoutUser = () => {
   localStorage.removeItem("token");

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, Typography, Tag, message, Spin } from "antd";
-import { getMyOrders } from "../api/ApiClient";
+import { getAllOrders } from "../api/ApiClient";
 
 const { Title, Text } = Typography;
 
@@ -11,7 +11,7 @@ export default function AdminOrders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const data = await getMyOrders(); // tu peux créer une route adminOrders si besoin
+        const data = await getAllOrders(); // tu peux créer une route adminOrders si besoin
         setOrders(data);
       } catch (err) {
         console.error(err);

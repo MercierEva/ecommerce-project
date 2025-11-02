@@ -5,15 +5,15 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth(); // ✅ Hook pour gérer l'auth
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      await login(values.email, values.password); // la fonction login vient du AuthContext
+      const res = await login(values); // Passer { email, password }
       message.success("Connecté avec succès !");
-      navigate("/"); // redirection après login
+      navigate(res.user?.is_admin ? "/admin" : "/");
     } catch (err) {
       console.error(err);
       message.error("Identifiants invalides");

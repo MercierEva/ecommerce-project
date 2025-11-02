@@ -28,10 +28,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await loginUser(credentials);
       setUser(res.user);
+      return res;
     } finally {
       setLoading(false);
     }
   };
+
 
   const logout = () => {
     logoutUser();
