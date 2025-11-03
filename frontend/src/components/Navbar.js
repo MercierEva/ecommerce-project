@@ -2,11 +2,16 @@ import React from "react";
 import { Layout, Menu, Badge, Button, Dropdown } from "antd";
 import { ShoppingCartOutlined, UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthProvider";
+import { useCart } from "../context/CartProvider";
 
 const { Header } = Layout;
 
-export default function Navbar({ cartCount = 0, user, onLogout }) {
+export default function Navbar() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { cart } = useCart();
+  const cartCount = cart.length;
 
   // 🔒 Menu utilisateur
   const userMenu = {
@@ -26,7 +31,7 @@ export default function Navbar({ cartCount = 0, user, onLogout }) {
             type="link"
             danger
             icon={<LogoutOutlined />}
-            onClick={onLogout}
+            onClick={logout}
             style={{ padding: 0 }}
           >
             Se déconnecter

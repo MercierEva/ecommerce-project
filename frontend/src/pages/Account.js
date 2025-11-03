@@ -1,13 +1,14 @@
-// src/pages/Account.js
 import React, { useEffect, useState } from "react";
-import { Card, Table, Tag, Typography, Spin, message } from "antd";
+import { Card, Table, Tag, Typography, Spin, message, Button } from "antd"; 
 import { getMyOrders } from "../api/ApiClient";
+import { useNavigate } from "react-router-dom"; 
 
 const { Title, Text } = Typography;
 
 export default function Account({ user }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     if (!user) {
@@ -65,6 +66,15 @@ export default function Account({ user }) {
         return <Tag color={color}>{status.toUpperCase()}</Tag>;
       },
     },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Button type="link" onClick={() => navigate(`/orders/${record.id}`)}>
+          Détails
+        </Button>
+      ),
+    },
   ];
 
   if (loading) {
@@ -103,7 +113,12 @@ export default function Account({ user }) {
         style={{ marginTop: 30, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", borderRadius: 12 }}
       >
         {orders.length > 0 ? (
-          <Table dataSource={orders} columns={columns} rowKey="id" pagination={{ pageSize: 5 }} />
+          <Table
+            dataSource={orders}
+            columns={columns}
+            rowKey="id"
+            pagination={{ pageSize: 5 }}
+          />
         ) : (
           <p style={{ textAlign: "center", margin: "20px 0" }}>
             Vous n’avez pas encore passé de commande.

@@ -1,14 +1,21 @@
+// src/pages/Checkout.js
 import React, { useState } from "react";
 import { Form, Input, Button, Typography, Divider, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { createCheckoutSession } from "../api/ApiClient";
+import { useCart } from "../context/CartProvider";
+import { useAuth } from "../context/AuthProvider";
 
 const { Title } = Typography;
 
-export default function Checkout({ cart, user }) {
-  const [loading, setLoading] = useState(false);
+export default function Checkout() {
+  const { cart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const total = cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
+
   const onFinish = async (values) => {
     if (!cart || cart.length === 0) {
       message.warning("Votre panier est vide !");
@@ -17,13 +24,12 @@ export default function Checkout({ cart, user }) {
 
     setLoading(true);
     try {
-      // ✅ Création de la session Stripe avec les infos de livraison
+      // ✅ Création de la session Stripe
       const data = await createCheckoutSession(cart, values);
 
       if (data?.url) {
         window.location.href = data.url; // redirection Stripe
       } else if (data?.success) {
-        // simulation sans Stripe
         window.location.href = `/success?order_id=${data.order_id}`;
       } else {
         message.error("Erreur lors de la création de la session de paiement");
@@ -44,9 +50,7 @@ export default function Checkout({ cart, user }) {
           Se connecter
         </Button>
         <Divider>ou</Divider>
-        <Button onClick={() => navigate("/register?redirect=/checkout")}>
-          Créer un compte
-        </Button>
+        <Button onClick={() => navigate("/register?redirect=/checkout")}>Créer un compte</Button>
       </div>
     );
   }

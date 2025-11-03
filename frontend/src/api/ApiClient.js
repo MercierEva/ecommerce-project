@@ -136,7 +136,11 @@ export const uploadImage = async (file) => {
    🧩 COMMANDES
 ================================ */
 
-export const getMyOrders = () => fetchApi("/orders/user/my", {}, true);
+export const getMyOrders = async () =>
+  fetchApi("/orders/user/my", { method: "GET" }, true);
+
+export const getOrderById = async (id) =>
+  fetchApi(`/orders/${id}`, { method: "GET" }, true);
 
 /* ================================
    💳 PAIEMENT / STRIPE
@@ -166,7 +170,6 @@ export const createCheckoutSession = async (cartItems, shipping) => {
     true
   );
 };
-
 
 
 /* ================================

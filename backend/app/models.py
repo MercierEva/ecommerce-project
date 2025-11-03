@@ -1,8 +1,16 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean, func, Enum
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from app.database import Base
+import enum
 
+
+class OrderStatus(enum.Enum):
+    pending = "pending"
+    paid = "paid"
+    shipped = "shipped"
+    delivered = "delivered"
+    cancelled = "cancelled"
 
 class User(Base):
     __tablename__ = "users"
@@ -34,9 +42,10 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    status = Column(String, default="pending")  # pending, paid, canceled
+    status = Column(Enum(OrderStatus), default=OrderStatus.pending)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     total = Column(Float, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     shipping_name = Column(String)
     shipping_address = Column(String)
     shipping_city = Column(String)

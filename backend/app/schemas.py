@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime
+from enum import Enum
 
 # --- Users ---
 class UserCreate(BaseModel):
@@ -56,9 +57,16 @@ class OrderItem(OrderItemBase):
     class Config:
         orm_mode = True
 
+class OrderStatus(str, Enum):
+    pending = "pending"
+    paid = "paid"
+    shipped = "shipped"
+    delivered = "delivered"
+    cancelled = "cancelled"
+
 class OrderBase(BaseModel):
     total: float
-    status: Optional[str] = "pending"
+    status: Optional[OrderStatus] = OrderStatus.pending
 
 class OrderCreate(OrderBase):
     items: List[OrderItemCreate]
@@ -79,6 +87,21 @@ class Order(OrderBase):
     shipping_phone: Optional[str]
     stripe_session_id: Optional[str]
     items: List[OrderItem]
+
+    class Config:
+        orm_mode = True
+
+class OrderCreate(OrderBase):
+    pass 
+
+class OrderUpdateStatus(BaseModel):
+    status: OrderStatus
+
+class OrderResponse(OrderBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True

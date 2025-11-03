@@ -81,3 +81,21 @@ def get_order(order_id: int, db: Session = Depends(get_db), current_user: models
         raise HTTPException(status_code=404, detail="Commande introuvable")
     return order
 
+@router.put("/{order_id}/status", response_model=schemas.OrderResponse)
+def update_order_status(
+    order_id: int,
+    update: schemas.OrderUpdateStatus,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Accès réservé à l’administrateur")
+
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Commande introuvable")
+
+    order.status = update.status
+    db.commit()
+    db.refresh(order)
+    return order
