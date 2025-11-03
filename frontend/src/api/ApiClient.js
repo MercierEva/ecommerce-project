@@ -145,19 +145,29 @@ export const getMyOrders = () => fetchApi("/orders/user/my", {}, true);
 /**
  * Crée une session Stripe Checkout (ou simule le paiement)
  * @param {Array} cartItems  Liste des produits du panier [{id, name, price, quantity}]
+ * @param {Object} shipping  Infos de livraison { full_name, address, city, postal_code, phone }
  */
-export const createCheckoutSession = async (cartItems) => {
-  // ✅ on passe directement le tableau, fetchApi s'occupe du JSON.stringify et de l'enrobage
+export const createCheckoutSession = async (cartItems, shipping) => {
+  // 🔹 transformer chaque item pour correspondre aux clés attendues par le backend
+  const items = cartItems.map(item => ({
+    id: item.id || item.product_id,    // backend attend "id"
+    name: item.name || item.title,     // backend attend "name"
+    price: item.price,
+    quantity: item.quantity || 1,
+  }));
+
   return await fetchApi(
     "/payments/create-checkout-session",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: cartItems }), 
+      body: JSON.stringify({ items, shipping }),
     },
-    true // inclure le token utilisateur
+    true
   );
 };
+
+
 
 /* ================================
    🧩 COMMANDES ADMIN

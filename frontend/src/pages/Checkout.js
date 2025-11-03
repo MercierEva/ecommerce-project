@@ -1,4 +1,3 @@
-// src/pages/Checkout.js
 import React, { useState } from "react";
 import { Form, Input, Button, Typography, Divider, message } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -10,18 +9,27 @@ export default function Checkout({ cart, user }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const total = cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
-
   const onFinish = async (values) => {
+    if (!cart || cart.length === 0) {
+      message.warning("Votre panier est vide !");
+      return;
+    }
+
     setLoading(true);
     try {
-      const payload = {
-        items: cart,
-        shipping: values, // ← on inclut les infos de livraison
-      };
-      const data = await createCheckoutSession(payload);
-      if (data?.url) window.location.href = data.url;
-      else message.error("Erreur lors de la création de la session Stripe");
+      // ✅ Création de la session Stripe avec les infos de livraison
+      const data = await createCheckoutSession(cart, values);
+
+      if (data?.url) {
+        window.location.href = data.url; // redirection Stripe
+      } else if (data?.success) {
+        // simulation sans Stripe
+        window.location.href = `/success?order_id=${data.order_id}`;
+      } else {
+        message.error("Erreur lors de la création de la session de paiement");
+      }
     } catch (err) {
+      console.error("Erreur paiement:", err);
       message.error(err.message || "Erreur serveur lors du paiement");
     } finally {
       setLoading(false);

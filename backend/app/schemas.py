@@ -62,11 +62,22 @@ class OrderBase(BaseModel):
 
 class OrderCreate(OrderBase):
     items: List[OrderItemCreate]
+    shipping_name: str
+    shipping_address: str
+    shipping_city: str
+    shipping_postal_code: str
+    shipping_phone: Optional[str] = None
 
 class Order(OrderBase):
     id: int
     user_id: int
     created_at: datetime
+    shipping_name: Optional[str]
+    shipping_address: Optional[str]
+    shipping_city: Optional[str]
+    shipping_postal_code: Optional[str]
+    shipping_phone: Optional[str]
+    stripe_session_id: Optional[str]
     items: List[OrderItem]
 
     class Config:

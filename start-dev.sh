@@ -33,16 +33,6 @@ kubectl apply -f "$K8S_DIR/postgres/postgres-service.yaml"
 # Attendre que PostgreSQL soit prêt
 kubectl wait --for=condition=available --timeout=300s deployment/postgres
 
-# Déployer le Job Alembic
-sed "s|alembic-migrate|$JOB_NAME|g; s|backend-dev:latest|$BACKEND_TAG|g" \
-    $K8S_DIR/backend/alembic-job.yaml | kubectl apply -f -
-
-# Attendre la fin du Job
-kubectl wait --for=condition=complete job/$JOB_NAME --timeout=300s || \
-kubectl logs job/$JOB_NAME
-
-# Supprimer le Job après exécution pour ne pas polluer le cluster
-kubectl delete job $JOB_NAME
 
 # Déployer backend
 kubectl apply -f "$K8S_DIR/backend/backend-deployment.yaml"

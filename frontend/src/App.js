@@ -9,6 +9,7 @@ import Success from "./pages/Success";
 import Account from "./pages/Account";
 import Cart from "./pages/Cart";
 import Cancel from "./pages/Cancel";
+import Checkout from "./pages/Checkout";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { getMe } from "./api/ApiClient";
@@ -74,6 +75,7 @@ export default function App() {
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/account" element={<Account user={user} />} />
+          <Route path="/checkout" element={<Checkout cart={cart} user={user} />} />
 
           {/* Routes Admin imbriquées */}
           <Route

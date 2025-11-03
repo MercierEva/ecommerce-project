@@ -12,6 +12,32 @@ spec:
       labels:
         app: backend-dev
     spec:
+      # InitContainer pour attendre que PostgreSQL soit disponible
+      initContainers:
+        - name: wait-for-db
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              echo "⏳ Waiting for PostgreSQL..."
+              until nc -z $DB_HOST 5432; do
+                echo "Waiting for DB..."
+                sleep 2
+              done
+              echo "✅ PostgreSQL is ready!"
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_HOST
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_URL
+
       containers:
         - name: backend
           image: backend-dev:latest
@@ -21,9 +47,25 @@ spec:
           volumeMounts:
             - name: media-storage
               mountPath: /app/static/images
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_URL
+          # Commande : Alembic puis démarrage FastAPI
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "=== Running Alembic migrations ==="
+              alembic -c alembic.ini upgrade head || { echo "Migrations failed"; exit 1; }
+              echo "=== Starting backend ==="
+              uvicorn app.main:app --host 0.0.0.0 --port 8000
+
       volumes:
         - name: media-storage
           persistentVolumeClaim:
             claimName: backend-media-pvc
-
-

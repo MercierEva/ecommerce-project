@@ -44,36 +44,35 @@ def create_checkout_session(
     total = sum(item["price"] * item["quantity"] for item in cart)
 
     try:
-        # ✅ Création de la commande et des items en transaction
-        with db.begin():
-            order = Order(
-                user_id=user.id,
-                total=total,
-                status="pending",
-                shipping_name=shipping.get("full_name"),
-                shipping_address=shipping.get("address"),
-                shipping_city=shipping.get("city"),
-                shipping_postal_code=shipping.get("postal_code"),
-                shipping_phone=shipping.get("phone"),
-            )
-            db.add(order)
-            db.flush()  # pour obtenir order.id avant le commit
+        order = Order(
+            user_id=user.id,
+            total=total,
+            status="pending",
+            shipping_name=shipping.get("full_name"),
+            shipping_address=shipping.get("address"),
+            shipping_city=shipping.get("city"),
+            shipping_postal_code=shipping.get("postal_code"),
+            shipping_phone=shipping.get("phone"),
+        )
+        db.add(order)
+        db.flush()  # pour récupérer order.id
 
-            for item in cart:
-                db.add(
-                    OrderItem(
-                        order_id=order.id,
-                        product_id=item["id"],
-                        quantity=item["quantity"],
-                        price=item["price"],
-                    )
+        for item in cart:
+            db.add(
+                OrderItem(
+                    order_id=order.id,
+                    product_id=item["id"],
+                    quantity=item["quantity"],
+                    price=item["price"],
                 )
-
+            )
+        db.commit()  # ⚡ commit ici avant d’appeler Stripe
+        
         # ✅ Fallback si on n’a pas de clé Stripe (mode local ou test)
         if not STRIPE_SECRET_KEY:
             return {"success": True, "order_id": order.id}
 
-        # ✅ Préparation des items pour Stripe
+        # Ensuite créer la session Stripe
         line_items = [
             {
                 "price_data": {
@@ -85,10 +84,7 @@ def create_checkout_session(
             }
             for item in cart
         ]
-
         frontend_base = FRONTEND_URL or f"{request.url.scheme}://{request.headers['host']}"
-
-        # ✅ Création de la session Stripe
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=line_items,
@@ -103,7 +99,7 @@ def create_checkout_session(
             },
         )
 
-        # ✅ Sauvegarde du stripe_session_id
+        # Mettre à jour le stripe_session_id après la création de la session
         order.stripe_session_id = session.id
         db.commit()
 
