@@ -26,47 +26,69 @@ def create_checkout_session(
 ):
     """
     Crée une session Stripe Checkout à partir du panier utilisateur.
-    Le frontend envoie un JSON : {"items": [{id, name, price, quantity}]}
+    Le frontend envoie un JSON : {"items": [{id, name, price, quantity}], "shipping": {...}}
     """
     cart = body.get("items", [])
+    shipping = body.get("shipping", {})
+
     if not cart:
         raise HTTPException(status_code=400, detail="Panier vide")
 
-    # 🔸 Calcul du total
-    total = sum(item["price"] * item.get("quantity", 1) for item in cart)
-
-    # 🔸 Création de la commande dans la base
-    order = Order(user_id=user.id, total=total, status="pending")
-    db.add(order)
-    db.commit()
-    db.refresh(order)
-
+    # ✅ Validation basique du panier
     for item in cart:
-        order_item = OrderItem(
-            order_id=order.id,
-            product_id=item["id"],
-            quantity=item.get("quantity", 1),
-            price=item["price"],
-        )
-        db.add(order_item)
-    db.commit()
+        if not all(k in item for k in ("id", "name", "price", "quantity")):
+            raise HTTPException(status_code=400, detail="Article invalide dans le panier")
+        if item["price"] <= 0 or item["quantity"] <= 0:
+            raise HTTPException(status_code=400, detail="Prix ou quantité invalide")
 
-    # 🔹 Préparation des items pour Stripe
-    line_items = [
-        {
-            "price_data": {
-                "currency": "eur",
-                "product_data": {"name": item["name"]},
-                "unit_amount": int(item["price"] * 100),
-            },
-            "quantity": item.get("quantity", 1),
-        }
-        for item in cart
-    ]
-
-    frontend_base = FRONTEND_URL or f"{request.url.scheme}://{request.headers['host']}"
+    total = sum(item["price"] * item["quantity"] for item in cart)
 
     try:
+        # ✅ Création de la commande et des items en transaction
+        with db.begin():
+            order = Order(
+                user_id=user.id,
+                total=total,
+                status="pending",
+                shipping_name=shipping.get("full_name"),
+                shipping_address=shipping.get("address"),
+                shipping_city=shipping.get("city"),
+                shipping_postal_code=shipping.get("postal_code"),
+                shipping_phone=shipping.get("phone"),
+            )
+            db.add(order)
+            db.flush()  # pour obtenir order.id avant le commit
+
+            for item in cart:
+                db.add(
+                    OrderItem(
+                        order_id=order.id,
+                        product_id=item["id"],
+                        quantity=item["quantity"],
+                        price=item["price"],
+                    )
+                )
+
+        # ✅ Fallback si on n’a pas de clé Stripe (mode local ou test)
+        if not STRIPE_SECRET_KEY:
+            return {"success": True, "order_id": order.id}
+
+        # ✅ Préparation des items pour Stripe
+        line_items = [
+            {
+                "price_data": {
+                    "currency": "eur",
+                    "product_data": {"name": item["name"]},
+                    "unit_amount": int(item["price"] * 100),
+                },
+                "quantity": item["quantity"],
+            }
+            for item in cart
+        ]
+
+        frontend_base = FRONTEND_URL or f"{request.url.scheme}://{request.headers['host']}"
+
+        # ✅ Création de la session Stripe
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=line_items,
@@ -74,16 +96,23 @@ def create_checkout_session(
             customer_email=user.email,
             success_url=f"{frontend_base}/success?order_id={order.id}",
             cancel_url=f"{frontend_base}/cancel",
-            metadata={"order_id": str(order.id)},
+            metadata={
+                "order_id": str(order.id),
+                "shipping_city": shipping.get("city", ""),
+                "shipping_name": shipping.get("full_name", ""),
+            },
         )
 
+        # ✅ Sauvegarde du stripe_session_id
         order.stripe_session_id = session.id
         db.commit()
-        return {"url": session.url}
+
+        return {"url": session.url, "order_id": order.id}
 
     except Exception as e:
+        db.rollback()
         print("❌ Erreur Stripe:", str(e))
-        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}")
 
 
 @router.post("/webhook")

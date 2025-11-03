@@ -1,16 +1,24 @@
 // src/pages/Cart.js
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { List, Button, Typography, Divider, message } from "antd";
 import { createCheckoutSession } from "../api/ApiClient";
 
 const { Title } = Typography;
 
 export default function Cart({ cart, onRemove }) {
+  const navigate = useNavigate();
   const total = cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
 
   const handleCheckout = async () => {
     if (!cart.length) {
       message.warning("Votre panier est vide !");
+      return;
+    }
+
+    if (!localStorage.getItem("token")) {
+      message.warning("Veuillez vous connecter pour payer.");
+      navigate("/login?redirect=/cart");
       return;
     }
 

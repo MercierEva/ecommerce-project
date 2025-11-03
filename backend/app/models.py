@@ -37,6 +37,13 @@ class Order(Base):
     status = Column(String, default="pending")  # pending, paid, canceled
     total = Column(Float, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    shipping_name = Column(String)
+    shipping_address = Column(String)
+    shipping_city = Column(String)
+    shipping_postal_code = Column(String)
+    shipping_phone = Column(String)
+    stripe_session_id = Column(String, nullable=True)
+
 
     user = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete")
