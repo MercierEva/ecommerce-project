@@ -2,17 +2,19 @@ import React, { useState } from "react";
 import { Form, Input, Button, Typography, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../api/ApiClient";
+import { useAuth } from "../context/AuthProvider";
 
 const { Title } = Typography;
 
-export default function Login({ setUser }) {
+export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useAuth()
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const data = await loginUser({ email: values.username, password: values.password });
+      const data = await loginUser({ email: values.email, password: values.password });
 
       if (data && data.user) {
         // Stockage du token et de l’admin flag
@@ -43,7 +45,7 @@ export default function Login({ setUser }) {
       <Title level={3} style={{ textAlign: "center" }}>Connexion</Title>
       <Form layout="vertical" onFinish={onFinish}>
         <Form.Item
-          name="username"
+          name="email"
           label="Email"
           rules={[{ required: true, type: "email", message: "Veuillez entrer un email valide" }]}
         >

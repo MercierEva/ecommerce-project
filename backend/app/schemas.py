@@ -91,9 +91,6 @@ class Order(OrderBase):
     class Config:
         orm_mode = True
 
-class OrderCreate(OrderBase):
-    pass 
-
 class OrderUpdateStatus(BaseModel):
     status: OrderStatus
 

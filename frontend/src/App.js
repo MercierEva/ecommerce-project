@@ -16,6 +16,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrders from "./pages/AdminOrders";
+import { AuthProvider } from "./context/AuthProvider";
+import { CartProvider } from "./context/CartProvider";
+
 
 export default function App() {
   return (

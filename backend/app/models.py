@@ -53,9 +53,12 @@ class Order(Base):
     shipping_phone = Column(String)
     stripe_session_id = Column(String, nullable=True)
 
-
     user = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete")
+
+    @property
+    def status_str(self):
+        return self.status.value if self.status else None
 
 class OrderItem(Base):
     __tablename__ = "order_items"

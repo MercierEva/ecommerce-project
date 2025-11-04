@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Card, Table, Tag, Typography, Spin, message, Button } from "antd"; 
 import { getMyOrders } from "../api/ApiClient";
 import { useNavigate } from "react-router-dom"; 
+import { useAuth } from "../context/AuthProvider";
+
 
 const { Title, Text } = Typography;
 
-export default function Account({ user }) {
+export default function Account() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate(); 

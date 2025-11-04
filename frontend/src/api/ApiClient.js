@@ -47,7 +47,7 @@ export const loginUser = async ({ email, password }) => {
   try {
     // 1️⃣ Login utilisateur standard
     const formData = new URLSearchParams();
-    formData.append("username", email); // OAuth2PasswordRequestForm
+    formData.append("username", email); 
     formData.append("password", password);
 
     const data = await fetchApi("/users/login", {

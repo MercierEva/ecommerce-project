@@ -2,23 +2,23 @@
 import React, { useEffect, useState } from "react";
 import { Card, Row, Col, Button, Typography, Select, message } from "antd";
 import { getProducts } from "../api/ApiClient";
+import { useCart } from "../context/CartProvider"; // <-- import du contexte
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-export default function Vitrine({ onAddToCart }) {
+export default function Vitrine() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
-  const bijoux = products.filter(p => p.category === "bijoux");
-  const tableaux = products.filter(p => p.category === "tableau");
 
+  const { addToCart } = useCart(); // <-- récupère addToCart depuis le contexte
 
   useEffect(() => {
     const fetchAllProducts = async () => {
       try {
-        const data = await getProducts(); // utilisation de ApiClient.js
+        const data = await getProducts();
         setProducts(data);
         const cats = Array.from(new Set(data.map(p => p.category).filter(Boolean)));
         setCategories(cats);
@@ -87,7 +87,7 @@ export default function Vitrine({ onAddToCart }) {
               <Button
                 type="primary"
                 style={{ marginTop: 12 }}
-                onClick={() => onAddToCart(p)}
+                onClick={() => addToCart(p)} // <-- ici
               >
                 Ajouter au panier
               </Button>
