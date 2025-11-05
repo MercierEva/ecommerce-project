@@ -1,9 +1,10 @@
 import React from "react";
-import { Layout, Menu, Badge, Button, Dropdown } from "antd";
+import { Layout, Menu, Badge, Dropdown } from "antd";
 import { ShoppingCartOutlined, UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import { useCart } from "../context/CartProvider";
+import "../index.css";
 
 const { Header } = Layout;
 
@@ -13,106 +14,73 @@ export default function Navbar() {
   const { cart } = useCart();
   const cartCount = cart.length;
 
-  // 🔒 Menu utilisateur
+  // Menu utilisateur
   const userMenu = {
     items: [
-      {
-        key: "account",
-        label: <Link to="/account">Mon compte</Link>,
-      },
-      user?.is_admin && {
-        key: "admin",
-        label: <Link to="/admin">Administration</Link>,
-      },
+      { key: "account", label: <Link to="/account">Mon compte</Link> },
+      user?.is_admin && { key: "admin", label: <Link to="/admin">Administration</Link> },
       {
         key: "logout",
         label: (
-          <Button
-            type="link"
-            danger
-            icon={<LogoutOutlined />}
+          <span
             onClick={logout}
-            style={{ padding: 0 }}
+            style={{ cursor: "pointer", color: "#4ae0ff", fontWeight: 500 }}
           >
             Se déconnecter
-          </Button>
+          </span>
         ),
       },
     ].filter(Boolean),
   };
 
   return (
-    <Header
-      style={{
-        background: "linear-gradient(90deg, #fdfcfb, #e2d1c3)",
-        padding: "0 50px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-      }}
-    >
-      {/* 🏠 Logo */}
-      <Link to="/" style={{ textDecoration: "none" }}>
-        <h1
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: "1.8rem",
-            color: "#2c2c2c",
-            margin: 0,
-          }}
-        >
-          Pierrot Créations
-        </h1>
+    <Header className="navbar-header">
+      {/* Logo “A” */}
+      <Link to="/" className="nav-logo">
+        A
       </Link>
 
-      {/* 🔗 Menu principal */}
+      {/* Menu principal */}
       <Menu
         mode="horizontal"
         style={{
-          border: "none",
-          background: "transparent",
           display: "flex",
           alignItems: "center",
-          gap: "16px",
+          background: "transparent",
+          borderBottom: "none",
+          flex: 1,
+          justifyContent: "flex-end",
+          gap: 12,
         }}
       >
         <Menu.Item key="home">
-          <Link to="/">Vitrine</Link>
+          <Link className="nav-link" to="/">Vitrine</Link>
         </Menu.Item>
 
-        <Menu.Item key="cart" style={{ marginLeft: "10px" }}>
-          <Link to="/cart">
+        <Menu.Item key="cart">
+          <Link className="nav-link" to="/cart">
             <Badge count={cartCount} size="small">
-              <ShoppingCartOutlined style={{ fontSize: "18px" }} />
+              <ShoppingCartOutlined style={{ fontSize: "18px", color: "#faf8f5" }} />
             </Badge>
           </Link>
         </Menu.Item>
 
-        {/* 👤 Si connecté → menu utilisateur, sinon boutons Login/Register */}
         {user ? (
-          <Menu.Item key="user" style={{ marginLeft: "15px" }}>
+          <Menu.Item key="user">
             <Dropdown menu={userMenu} placement="bottomRight" arrow>
-              <Button
-                type="text"
-                icon={<UserOutlined />}
-                style={{ color: "#2c2c2c", fontWeight: "500" }}
-              >
+              <span className="nav-link">
+                <UserOutlined style={{ marginRight: 6 }} />
                 {user.email}
-              </Button>
+              </span>
             </Dropdown>
           </Menu.Item>
         ) : (
           <>
             <Menu.Item key="login">
-              <Button type="link" onClick={() => navigate("/login")}>
-                Connexion
-              </Button>
+              <Link className="nav-link" to="/login">Connexion</Link>
             </Menu.Item>
             <Menu.Item key="register">
-              <Button type="primary" onClick={() => navigate("/register")}>
-                S’inscrire
-              </Button>
+              <Link className="nav-link" to="/register">S’inscrire</Link>
             </Menu.Item>
           </>
         )}
