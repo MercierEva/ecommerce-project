@@ -1,7 +1,7 @@
 import React from "react";
 import { Layout, Menu, Badge, Dropdown } from "antd";
 import { ShoppingCartOutlined, UserOutlined, LogoutOutlined } from "@ant-design/icons";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import { useCart } from "../context/CartProvider";
 import "../index.css";
@@ -9,7 +9,6 @@ import "../index.css";
 const { Header } = Layout;
 
 export default function Navbar() {
-  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { cart } = useCart();
   const cartCount = cart.length;
@@ -18,15 +17,12 @@ export default function Navbar() {
   const userMenu = {
     items: [
       { key: "account", label: <Link to="/account">Mon compte</Link> },
-      user?.is_admin && { key: "admin", label: <Link to="/admin">Administration</Link> },
       {
         key: "logout",
         label: (
-          <span
-            onClick={logout}
-            style={{ cursor: "pointer", color: "#4ae0ff", fontWeight: 500 }}
-          >
-            Se déconnecter
+          <span onClick={logout} style={{ cursor: "pointer" }}>
+            <LogoutOutlined style={{ marginRight: 6, color: "#ff4d4f" }} />
+            <span style={{ color: "#ff4d4f" }}>Se déconnecter</span>
           </span>
         ),
       },

@@ -42,12 +42,11 @@ export async function fetchApi(path, options = {}, withAuth = false) {
 /* ================================
    🧩 AUTH
 ================================ */
-
 export const loginUser = async ({ email, password }) => {
   try {
-    // 1️⃣ Login utilisateur standard
+    // Login utilisateur standard
     const formData = new URLSearchParams();
-    formData.append("username", email); 
+    formData.append("username", email);
     formData.append("password", password);
 
     const data = await fetchApi("/users/login", {
@@ -62,7 +61,7 @@ export const loginUser = async ({ email, password }) => {
     const userInfo = await getMe();
     return { access_token: data.access_token, user: userInfo };
   } catch {
-    // 2️⃣ Fallback login admin
+    // Fallback login admin
     const res = await fetchApi("/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -72,7 +71,8 @@ export const loginUser = async ({ email, password }) => {
     localStorage.setItem("token", res.access_token);
     localStorage.setItem("is_admin", "true");
 
-    return { access_token: res.access_token, user: { email, is_admin: true } };
+    const adminInfo = await getMeAdmin(); // récupère les infos admin
+    return { access_token: res.access_token, user: { ...adminInfo, is_admin: true } };
   }
 };
 
@@ -137,7 +137,7 @@ export const uploadImage = async (file) => {
 ================================ */
 
 export const getMyOrders = async () =>
-  fetchApi("/orders/user/my", { method: "GET" }, true);
+  fetchApi("/orders/", { method: "GET" }, true);
 
 export const getOrderById = async (id) =>
   fetchApi(`/orders/${id}`, { method: "GET" }, true);
@@ -175,4 +175,32 @@ export const createCheckoutSession = async (cartItems, shipping) => {
 /* ================================
    🧩 COMMANDES ADMIN
 ================================ */
+
+export const getMeAdmin = async () =>
+  fetchApi("/admin/me", {}, true);
+
+
 export const getAllOrders = () => fetchApi("/admin/orders", {}, true);
+
+/**
+ * Récupère le détail d'une commande par son ID (admin)
+ * @param {number} id
+ */
+export const getOrderByIdAdmin = (id) =>
+  fetchApi(`/admin/orders/${id}`, {}, true);
+
+
+/**
+ * Supprime une commande par son ID
+ * @param {number} id
+ */
+export const deleteOrderAdmin = (id) =>
+  fetchApi(`/admin/orders/${id}`, { method: "DELETE" }, true);
+
+/**
+ * Met à jour le statut d'une commande
+ * @param {number} id
+ * @param {object} data  { status: "pending"|"paid"|"shipped"|"delivered"|"cancelled" }
+ */
+export const updateOrderStatusAdmin = (id, data) =>
+  fetchApi(`/admin/orders/${id}/status`, { method: "PUT", body: JSON.stringify(data) }, true);

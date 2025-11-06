@@ -1,7 +1,13 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from "./AuthProvider";
 
-export default function ProtectedRoute({ user, children, adminOnly = false }) {
+export default function ProtectedRoute({ children, adminOnly = false }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Chargement...</div>;
+
+
   // 🔹 Pas connecté → redirection vers login
   if (!user) {
     return <Navigate to="/login" replace />;
