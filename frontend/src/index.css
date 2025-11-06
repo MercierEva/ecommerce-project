@@ -1,9 +1,126 @@
 @import "@fontsource/montserrat/400.css";
 @import "@fontsource/montserrat/600.css";
 @import "@fontsource/playfair-display/700.css";
+@import "@fontsource/poiret-one/400.css";
 
+/* Styles globaux */
 body {
   font-family: "Montserrat", sans-serif;
   background-color: #faf8f5;
   color: #2c2c2c;
+  margin: 0;
+  padding: 0;
+}
+
+/* Titres harmonisés */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Playfair Display", serif;
+  color: #e3d7c4; /* couleur douce sur fond foncé */
+  margin: 0;
+}
+
+/* Navbar */
+.navbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 50px;
+  background-color: #374a5e; /* bleu foncé doux */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.nav-logo {
+  font-family: "Poiret One", cursive;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #faf8f5;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color:#b22222; 
+  transition: all 0.2s;
+}
+
+.nav-logo:hover {
+  transform: scale(1.1);
+}
+
+.nav-link {
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #faf8f5 !important;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #4ae0ff33;
+  color: #fff !important;
+}
+
+/* ProductCard */
+.product-card {
+  border-radius: 8px;
+  background-color: #f5f0e6;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.product-card img {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  height: 200px;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.product-card-description {
+  color: #555;
+}
+
+.product-card-button {
+  background-color: #4ae0ff;
+  color: #2e3b4e;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.product-card-button:hover {
+  background-color: #3ac7ff;
+  color: #2e3b4e;
+}
+
+/* Select categories */
+.select-categories {
+  background-color: #f5f0e6;
+  color: #2e3b4e;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-weight: 500;
+  width: 160px;
+}
+
+.select-categories .ant-select-selector {
+  background-color: #f5f0e6 !important;
+  color: #2e3b4e !important;
+  border-radius: 6px !important;
+}
+
+.select-categories .ant-select-item-option {
+  color: #2e3b4e;
+}
+
+.select-categories .ant-select-item-option-active {
+  background-color: #4ae0ff33;
 }

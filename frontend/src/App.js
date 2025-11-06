@@ -12,7 +12,7 @@ import Cancel from "./pages/Cancel";
 import Checkout from "./pages/Checkout";
 import OrderDetail from "./pages/OrderDetail";
 import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./context/ProtectedRoute";
 import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrders from "./pages/AdminOrders";

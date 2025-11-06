@@ -1,10 +1,11 @@
-// src/components/Vitrine.js
 import React, { useEffect, useState } from "react";
-import { Card, Row, Col, Button, Typography, Select, message } from "antd";
+import { Row, Col, Typography, Select, message, Spin } from "antd";
 import { getProducts } from "../api/ApiClient";
-import { useCart } from "../context/CartProvider"; // <-- import du contexte
+import { useCart } from "../context/CartProvider";
+import ProductCard from "../components/ProductCard";
+import "../index.css";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Option } = Select;
 
 export default function Vitrine() {
@@ -13,7 +14,7 @@ export default function Vitrine() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  const { addToCart } = useCart(); // <-- récupère addToCart depuis le contexte
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchAllProducts = async () => {
@@ -29,7 +30,6 @@ export default function Vitrine() {
         setLoading(false);
       }
     };
-
     fetchAllProducts();
   }, []);
 
@@ -40,58 +40,63 @@ export default function Vitrine() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", marginTop: 80 }}>
-        <Title level={3}>Chargement des produits...</Title>
+      <div style={{ textAlign: "center", marginTop: 120, color: "#fff", fontFamily: "'Poiret One', cursive" }}>
+        <Spin size="large" />
+        <Title level={3} style={{ color: "#4ae0ff", marginTop: 20 }}>
+          Chargement des créations...
+        </Title>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 60, maxWidth: 1200, margin: "auto" }}>
-      <Title level={2} style={{ textAlign: "center", marginBottom: 40 }}>
-        Les Créations de Pierrot
-      </Title>
+    <div
+      style={{
+        padding: "60px 60px",
+        maxWidth: 1400,
+        margin: "auto",
+        background: "radial-gradient(circle at top left, #2e3b4e, #374a5e, #3f556b)",
+        minHeight: "100vh",
+      }}
+    >
+      {/* Titre et select alignés */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40 }}>
+        <Title
+          level={3}
+          style={{
+            textAlign: "left",
+            marginBottom: 0,
+            color: "#faf8f5", 
+            fontFamily: "'Playfair Display', serif",
+            letterSpacing: 1.2,
+            fontWeight: 500,
+          }}
+        >
+          L’Atelier de Pierrot
+        </Title>
 
-      <Select
-        value={selectedCategory}
-        onChange={setSelectedCategory}
-        style={{ marginBottom: 30, width: 200 }}
-      >
-        <Option value="all">Toutes catégories</Option>
-        {categories.map(c => (
-          <Option key={c} value={c}>
-            {c}
-          </Option>
-        ))}
-      </Select>
+        <Select
+          value={selectedCategory}
+          onChange={setSelectedCategory}
+          className="select-categories"
+        >
+          <Option value="all" style={{ color: "#555" }}>Toutes catégories</Option>
+          {categories.map(c => (
+            <Option key={c} value={c}>{c}</Option>
+          ))}
+        </Select>
+      </div>
 
-      <Row gutter={[24, 24]}>
+      <Row gutter={[32, 32]} justify="start">
         {filteredProducts.map(p => (
-          <Col xs={24} sm={12} md={8} key={p.id}>
-            <Card
-              hoverable
-              cover={
-                <img
-                  alt={p.name}
-                  src={p.image_url}
-                  style={{ height: 280, objectFit: "cover", borderRadius: 8 }}
-                />
-              }
-              style={{ borderRadius: 12, boxShadow: "0 4px 10px rgba(0,0,0,0.05)" }}
-            >
-              <Title level={4}>{p.name}</Title>
-              <Text strong>{p.price} €</Text>
-              <br />
-              <Text type="secondary">{p.category}</Text>
-              <br />
-              <Button
-                type="primary"
-                style={{ marginTop: 12 }}
-                onClick={() => addToCart(p)} // <-- ici
-              >
-                Ajouter au panier
-              </Button>
-            </Card>
+          <Col xs={24} sm={12} md={8} lg={6} key={p.id}>
+            <ProductCard
+              product={{
+                ...p,
+                description: p.description,
+              }}
+              onAddToCart={addToCart}
+            />
           </Col>
         ))}
       </Row>
