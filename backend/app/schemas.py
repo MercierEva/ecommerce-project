@@ -3,10 +3,9 @@ from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
-# --- Users ---
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
+# ============================
+# 🧩 USERS
+# ============================
 
 class UserRead(BaseModel):
     id: int
@@ -17,13 +16,27 @@ class UserRead(BaseModel):
     class Config:
         orm_mode = True
 
-# --- Products ---
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+# ============================
+# 🧩 PRODUCTS
+# ============================
+
 class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
     image_url: str
     category: str
+
+class Product(ProductBase):
+    id: int
+    owner_id: Optional[int]
+
+    class Config:
+        orm_mode = True
 
 class ProductCreate(ProductBase):
     pass
@@ -35,27 +48,9 @@ class ProductUpdate(BaseModel):
     image_url: Optional[str]
     category: Optional[str]
 
-class Product(ProductBase):
-    id: int
-    owner_id: Optional[int] = None
-
-    class Config:
-        orm_mode = True
-
-# --- Orders ---
-class OrderItemBase(BaseModel):
-    product_id: int
-    quantity: int
-    price: float
-
-class OrderItemCreate(OrderItemBase):
-    pass
-
-class OrderItem(OrderItemBase):
-    id: int
-
-    class Config:
-        orm_mode = True
+# ============================
+# 🧩 ORDERS
+# ============================
 
 class OrderStatus(str, Enum):
     pending = "pending"
@@ -64,19 +59,31 @@ class OrderStatus(str, Enum):
     delivered = "delivered"
     cancelled = "cancelled"
 
+class OrderItemBase(BaseModel):
+    product_id: int
+    quantity: int
+    price: float
+
+class OrderItem(OrderItemBase):
+    id: int
+    product: Optional[Product]
+
+    class Config:
+        orm_mode = True
+
 class OrderBase(BaseModel):
     total: float
     status: Optional[OrderStatus] = OrderStatus.pending
 
 class OrderCreate(OrderBase):
-    items: List[OrderItemCreate]
+    items: List[OrderItemBase]
     shipping_name: str
     shipping_address: str
     shipping_city: str
     shipping_postal_code: str
-    shipping_phone: Optional[str] = None
+    shipping_phone: Optional[str]
 
-class Order(OrderBase):
+class OrderPublic(OrderBase):
     id: int
     user_id: int
     created_at: datetime
@@ -85,8 +92,8 @@ class Order(OrderBase):
     shipping_city: Optional[str]
     shipping_postal_code: Optional[str]
     shipping_phone: Optional[str]
-    stripe_session_id: Optional[str]
-    items: List[OrderItem]
+    items: List[OrderItem] = []
+    user_email: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -94,16 +101,11 @@ class Order(OrderBase):
 class OrderUpdateStatus(BaseModel):
     status: OrderStatus
 
-class OrderResponse(OrderBase):
-    id: int
-    user_id: int
-    created_at: datetime
-    updated_at: datetime
 
-    class Config:
-        orm_mode = True
+# ============================================================
+# 🧩 AUTH
+# ============================================================
 
-# --- Auth ---
 class AdminLogin(BaseModel):
     email: str
     password: str

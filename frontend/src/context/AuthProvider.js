@@ -1,6 +1,5 @@
-// context/AuthProvider.js
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getMe } from "../api/ApiClient";
+import { getMe, getMeAdmin } from "../api/ApiClient";
 
 const AuthContext = createContext();
 
@@ -15,11 +14,14 @@ export function AuthProvider({ children }) {
         setLoading(false);
         return;
       }
+
       try {
-        const currentUser = await getMe();
-        setUser(currentUser);
+        const isAdmin = localStorage.getItem("is_admin") === "true";
+        const currentUser = isAdmin ? await getMeAdmin() : await getMe();
+        setUser({ ...currentUser, is_admin: isAdmin });
       } catch {
         localStorage.removeItem("token");
+        localStorage.removeItem("is_admin");
       } finally {
         setLoading(false);
       }
@@ -29,6 +31,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("is_admin");
     setUser(null);
   };
 

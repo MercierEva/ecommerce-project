@@ -27,6 +27,7 @@ import {
   deleteProduct,
   uploadImage,
 } from "../api/ApiClient";
+import { useAuth } from "../context/AuthProvider";
 
 const { Title } = Typography;
 
@@ -36,19 +37,26 @@ export default function AdminProducts() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  const { user, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
 
   const loadProducts = async () => {
+    setLoading(true);
     try {
       const data = await getProducts();
       setProducts(data);
     } catch (err) {
       message.error("Impossible de charger les produits");
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!authLoading && user) loadProducts();
+  }, [authLoading, user])
+
+  if (authLoading || loading) return <div>Chargement des produits...</div>;
 
   const handleSaveProduct = async (values) => {
     try {
@@ -97,7 +105,7 @@ export default function AdminProducts() {
   return (
     <div>
       <Row justify="space-between" align="middle" style={{ marginBottom: 30 }}>
-        <Title level={3}>Produits</Title>
+        <Title level={3}>Gestion des articles</Title>
         <Button
           type="primary"
           icon={<PlusCircleOutlined />}

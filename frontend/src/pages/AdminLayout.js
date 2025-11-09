@@ -7,15 +7,19 @@ import {
   UnorderedListOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
+import { useAuth } from "../context/AuthProvider";
 
-const { Header, Sider, Content } = Layout;
+const { Header, Sider, Content, Footer } = Layout;
 
-export default function AdminLayout({ onLogout }) {
+export default function AdminLayout() {
+  const { logout } = useAuth();
   const navigate = useNavigate();
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
   const location = useLocation();
-  const selectedKey = location.pathname.includes("orders")
-    ? "orders"
-    : "products";
+  const selectedKey = location.pathname.includes("orders") ? "orders" : "products";
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -40,19 +44,12 @@ export default function AdminLayout({ onLogout }) {
         <Menu
           mode="inline"
           selectedKeys={[selectedKey]}
+          onClick={({ key }) => {
+            navigate(`/admin/${key}`);
+          }}
           items={[
-            {
-              key: "products",
-              icon: <ShoppingOutlined />,
-              label: "Produits",
-              onClick: () => navigate("/admin/products"),
-            },
-            {
-              key: "orders",
-              icon: <UnorderedListOutlined />,
-              label: "Commandes",
-              onClick: () => navigate("/admin/orders"),
-            },
+            { key: "products", icon: <ShoppingOutlined />, label: "Produits" },
+            { key: "orders", icon: <UnorderedListOutlined />, label: "Commandes" },
           ]}
         />
       </Sider>
@@ -69,15 +66,17 @@ export default function AdminLayout({ onLogout }) {
           <Button
             icon={<LogoutOutlined />}
             danger
-            onClick={onLogout}
+            onClick={handleLogout}
           >
             Déconnexion
           </Button>
         </Header>
-
         <Content style={{ margin: "20px", padding: 20, background: "#fff", borderRadius: 8 }}>
           <Outlet />
         </Content>
+        <Footer style={{ textAlign: "center", background: "#fafafa" }}>
+          © 2025 Pierrot Admin – E-commerce Dashboard
+        </Footer>
       </Layout>
     </Layout>
   );

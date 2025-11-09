@@ -100,11 +100,10 @@ export default function Account() {
     <div style={{ maxWidth: 900, margin: "50px auto", padding: "0 20px" }}>
       <Card
         title={<Title level={3}>Mon compte</Title>}
-        bordered={false}
+        variant={false}
         style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)", borderRadius: 12 }}
       >
         <p><Text strong>Email :</Text> {user.email}</p>
-        <p><Text strong>Rôle :</Text> {user.is_admin ? "Administrateur" : "Client"}</p>
         <p>
           <Text strong>Date d’inscription :</Text>{" "}
           {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}

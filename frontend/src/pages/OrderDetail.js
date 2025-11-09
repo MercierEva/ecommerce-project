@@ -88,8 +88,8 @@ export default function OrderDetail() {
         <Title level={4} style={{ marginTop: 30 }}>Livraison</Title>
         <p><Text strong>Nom :</Text> {order.shipping_name}</p>
         <p><Text strong>Adresse :</Text> {order.shipping_address}</p>
-        <p><Text strong>Ville :</Text> {order.shipping_city}</p>
         <p><Text strong>Code postal :</Text> {order.shipping_postal_code}</p>
+        <p><Text strong>Ville :</Text> {order.shipping_city}</p>
         <p><Text strong>Téléphone :</Text> {order.shipping_phone}</p>
 
         <Button style={{ marginTop: 20 }} onClick={() => navigate("/account")}>
