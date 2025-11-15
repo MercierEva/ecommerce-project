@@ -1,34 +1,33 @@
-# Étape 1 : Build du frontend React
+# Étape 1 : Build React
 FROM node:20 AS build
 WORKDIR /app
 
-# Copie uniquement les fichiers de dépendances d'abord (pour le cache)
+# Copier les fichiers de dépendances d'abord
 COPY package*.json ./
+RUN npm install --legacy-peer-deps && npm audit fix || true
 
-# Installation des dépendances
-# --legacy-peer-deps évite les conflits, audit fix corrige sans casser
-RUN npm install --legacy-peer-deps \
- && npm audit fix || true
-
-# Copie du reste du code source
+# Copier le reste du code
 COPY . .
 
-# Variables d'environnement pour le build
-ENV REACT_APP_API_URL=http://backend-dev-svc:8000
+# Variable d'environnement pour l'API backend
+ARG REACT_APP_API_URL=https://ecommerce.dev.local/api
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
 
-# Build de l’app
+# Build de l'application React
 RUN npm run build
 
-# Étape 2 : Nginx pour servir le frontend
+# Étape 2 : Nginx pour servir le frontend avec HTTPS
 FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
 
-# Copie de la config nginx custom (avec proxy /api/)
+# Copier la config nginx custom
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copie du build compilé
+# Copier le build React
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Exposition du port
+# Exposer le port HTTPS
+EXPOSE 443
 EXPOSE 80
 
 # Démarrage de Nginx

@@ -25,7 +25,7 @@ export default function Vitrine() {
         setCategories(cats);
       } catch (err) {
         console.error("Erreur de chargement produits:", err);
-        message.error("Impossible de charger les produits.");
+        message.info("Aucun produit disponible pour le moment.");
       } finally {
         setLoading(false);
       }

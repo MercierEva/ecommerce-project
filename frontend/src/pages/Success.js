@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Result, Button, Spin } from "antd";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartProvider";
 
 export default function Success() {
   const [loading, setLoading] = useState(true);
@@ -12,6 +13,7 @@ export default function Success() {
     const idStr = params.get("order_id");
     const id = idStr ? parseInt(idStr, 10) : null;
     setOrderId(id);
+
     setTimeout(() => setLoading(false), 1000);
   }, [params]);
 

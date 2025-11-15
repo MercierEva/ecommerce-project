@@ -1,11 +1,34 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from pathlib import Path
 from sqlalchemy.orm import Session, joinedload
-from fastapi.security import OAuth2PasswordRequestForm
 from typing import List
 from app import models, schemas
 from app.database import get_db
-from app.auth import get_password_hash, verify_password, create_access_token, get_current_user, get_current_admin
+from app.auth import verify_password, create_access_token, get_current_admin
 router = APIRouter(tags=["Admin"])
+
+STATIC_DIR = Path("/app/static")
+IMAGES_DIR = STATIC_DIR / "images"
+IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 Mo
+
+
+@router.post("/upload-image")
+async def upload_image(file: UploadFile = File(...), current_admin=Depends(get_current_admin)):
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux")
+
+    # Vérifie qu’il n’y a pas de caractères dangereux dans le nom
+    safe_name = file.filename.replace("..", "").replace("/", "_")
+
+    file_path = IMAGES_DIR / safe_name
+    with file_path.open("wb") as f:
+        f.write(contents)
+
+    return {"filename": safe_name, "url": f"/static/images/{safe_name}"}
+
 
 @router.get("/me", response_model=schemas.UserRead)
 def get_admin_me(

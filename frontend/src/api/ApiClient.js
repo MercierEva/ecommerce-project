@@ -1,50 +1,112 @@
 // src/api/ApiClient.js
 const BASE_URL = "https://ecommerce.dev.local/api";
+let isRefreshing = false;
+let refreshQueue = [];
 
-/**
- * fetchApi centralisé avec gestion automatique du token
- */
 export async function fetchApi(path, options = {}, withAuth = false) {
   const url = `${BASE_URL}${path.startsWith("/") ? path : "/" + path}`;
-  const headers = options.headers ? { ...options.headers } : {};
 
-  // 🔹 Ajout du token JWT si withAuth = true
+  let headers = options.headers ? { ...options.headers } : {};
+
+  const accessToken = localStorage.getItem("access_token");
+  const refreshToken = localStorage.getItem("refresh_token");
+
+  if (withAuth && !accessToken) return null;
+
   if (withAuth) {
-    const token = localStorage.getItem("token");
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
-  // 🔹 Par défaut, les requêtes POST/PUT utilisent JSON sauf si formData
-  if (
-    !headers["Content-Type"] &&
-    !(options.body instanceof FormData)
-  ) {
+  if (!headers["Content-Type"] && !(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(url, { ...options, headers });
+  let response = await fetch(url, { ...options, headers });
 
-  // 🔹 Gestion des erreurs HTTP
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const detail = err.detail || err.message || `HTTP ${res.status}`;
-    throw new Error(detail);
+  /* =============================
+     🔁 TOKEN EXPIRE → 401
+  ============================= */
+  if (response.status === 401 && withAuth) {
+    // ❌ Pas de refresh_token → logout
+    if (!refreshToken) {
+      localStorage.clear();
+      throw new Error("Session expirée, veuillez vous reconnecter.");
+    }
+
+    /* =============================
+       🚫 Si refresh déjà en cours → attendre
+    ============================= */
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        refreshQueue.push({ resolve, reject });
+      });
+    }
+
+    /* =============================
+       🔄 DÉMARRER UN REFRESH
+    ============================= */
+    isRefreshing = true;
+
+    try {
+      const refreshRes = await fetch(`${BASE_URL}/users/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: refreshToken }),
+      });
+
+      if (!refreshRes.ok) throw new Error("Refresh token invalide");
+
+      const data = await refreshRes.json();
+
+      // Mettre à jour les tokens
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token || refreshToken);
+
+      // Débloquer la queue
+      refreshQueue.forEach(({ resolve }) => resolve());
+      refreshQueue = [];
+
+      /* ===================================
+         🔁 Ressayer la requête d'origine
+      =================================== */
+      headers["Authorization"] = `Bearer ${data.access_token}`;
+      const retry = await fetch(url, { ...options, headers });
+
+      return responseIsJson(retry);
+    } catch (err) {
+      // Échec total : logout
+      localStorage.clear();
+
+      // Débloquer la queue en erreur
+      refreshQueue.forEach(({ reject }) => reject(err));
+      refreshQueue = [];
+
+      throw new Error("Session expirée, veuillez vous reconnecter.");
+    } finally {
+      isRefreshing = false;
+    }
   }
 
-  // 🔹 Parsing automatique selon le type de contenu
-  const contentType = res.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) {
-    return await res.json();
-  }
-  return await res.text();
+  // Retour normal
+  return responseIsJson(response);
 }
+
+/* =============================
+   🧠 Détection auto JSON / TEXT
+============================= */
+function responseIsJson(res) {
+  const type = res.headers.get("content-type") || "";
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (type.includes("application/json")) return res.json();
+  return res.text();
+}
+
 
 /* ================================
    🧩 AUTH
 ================================ */
 export const loginUser = async ({ email, password }) => {
   try {
-    // Login utilisateur standard
     const formData = new URLSearchParams();
     formData.append("username", email);
     formData.append("password", password);
@@ -55,10 +117,11 @@ export const loginUser = async ({ email, password }) => {
       body: formData,
     });
 
-    localStorage.setItem("token", data.access_token);
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token); 
     localStorage.setItem("is_admin", data.user?.is_admin ? "true" : "false");
 
-    const userInfo = await getMe();
+    const userInfo = await getMe(); 
     return { access_token: data.access_token, user: userInfo };
   } catch {
     // Fallback login admin
@@ -68,16 +131,17 @@ export const loginUser = async ({ email, password }) => {
       body: JSON.stringify({ email, password }),
     });
 
-    localStorage.setItem("token", res.access_token);
+    localStorage.setItem("access_token", res.access_token);
+    localStorage.setItem("refresh_token", res.refresh_token); 
     localStorage.setItem("is_admin", "true");
 
-    const adminInfo = await getMeAdmin(); // récupère les infos admin
+    const adminInfo = await getMeAdmin();
     return { access_token: res.access_token, user: { ...adminInfo, is_admin: true } };
   }
 };
 
 export const logoutUser = () => {
-  localStorage.removeItem("token");
+  localStorage.removeItem("access_token");
   localStorage.removeItem("is_admin");
 };
 
@@ -93,11 +157,54 @@ export const getMe = async () => {
    🧩 USERS
 ================================ */
 
-export const registerUser = (data) =>
-  fetchApi("/users/register", {
+export const registerUser = async (data) => {
+  try {
+    const res = await fetchApi("/users/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!res || !res.access_token || !res.user) {
+      throw new Error("Erreur lors de la création du compte");
+    }
+
+    localStorage.setItem("access_token", res.access_token);
+    localStorage.setItem("refresh_token", res.refresh_token);
+    localStorage.setItem("is_admin", "false");
+
+    return res;
+  } catch (err) {
+    throw new Error(err.detail || err.message || "Erreur lors de l'inscription");
+  }
+};
+
+/**
+ * Change password (utilisateur connecté)
+ */
+export const changePassword = async ({ oldPassword, newPassword }) => {
+  return fetchApi("/users/change-password", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+  }, true);
+};
+
+/**
+ * Forgot password (reset)
+ */
+export const forgotPassword = async ({ email }) => {
+  return fetchApi("/users/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
   });
+};
+
+export async function resetPassword(token, newPassword) {
+  return fetchApi("/users/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+}
 
 /* ================================
    🧩 PRODUITS

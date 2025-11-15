@@ -54,7 +54,7 @@ export default function Navbar() {
         </Menu.Item>
 
         <Menu.Item key="cart">
-          <Link className="nav-link" to="/cart">
+          <Link className="nav-link" to="/cart-checkout">
             <Badge count={cartCount} size="small">
               <ShoppingCartOutlined style={{ fontSize: "18px", color: "#faf8f5" }} />
             </Badge>

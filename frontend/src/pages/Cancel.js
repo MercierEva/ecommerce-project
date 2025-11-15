@@ -17,7 +17,7 @@ export default function Cancel() {
           : "Le paiement a été annulé avant validation."
       }
       extra={[
-        <Button type="primary" key="retry" onClick={() => navigate("/cart")}>
+        <Button type="primary" key="retry" onClick={() => navigate("/cart-checkout")}>
           Réessayer le paiement
         </Button>,
         <Button key="home" onClick={() => navigate("/")}>

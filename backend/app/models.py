@@ -66,3 +66,23 @@ class OrderItem(Base):
 
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
+
+class Cart(Base):
+    __tablename__ = "carts"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # null si visiteur non connecté
+    session_id = Column(String, nullable=True, unique=True)  # identifiant anonyme (cookie frontend)
+    created_at = Column(DateTime, default=func.now())
+
+    items = relationship("CartItem", back_populates="cart", cascade="all, delete")
+
+class CartItem(Base):
+    __tablename__ = "cart_items"
+    id = Column(Integer, primary_key=True)
+    cart_id = Column(Integer, ForeignKey("carts.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
+    quantity = Column(Integer, default=1)
+    created_at = Column(DateTime, default=func.now())
+
+    cart = relationship("Cart", back_populates="items")
+    product = relationship("Product")
