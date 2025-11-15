@@ -3,6 +3,7 @@ import { Card, Table, Tag, Typography, Spin, message, Button } from "antd";
 import { getMyOrders } from "../api/ApiClient";
 import { useNavigate } from "react-router-dom"; 
 import { useAuth } from "../context/AuthProvider";
+import ChangePassword from "./ChangePassword";
 
 
 const { Title, Text } = Typography;
@@ -126,6 +127,9 @@ export default function Account() {
             Vous n’avez pas encore passé de commande.
           </p>
         )}
+      </Card>
+      <Card title={<Title level={4}>Changer mon mot de passe</Title>} style={{ marginTop: 30, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", borderRadius: 12 }}>
+        <ChangePassword />
       </Card>
     </div>
   );

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
@@ -114,3 +114,33 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserRead
+
+# ============================
+# 🧩 CART
+# ============================
+
+class CartItemBase(BaseModel):
+    product_id: int
+    quantity: int = 1
+
+class CartItemCreate(CartItemBase):
+    pass
+
+class CartItemRead(BaseModel):
+    id: int
+    product: Product
+    quantity: int
+
+    class Config:
+        orm_mode = True
+
+class CartRead(BaseModel):
+    id: int
+    user_id: Optional[int]
+    session_id: Optional[str]
+    items: List[CartItemRead]
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+

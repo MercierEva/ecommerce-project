@@ -1,4 +1,4 @@
-# backend/Dockerfile
+# Image de base
 FROM python:3.11-slim
 
 WORKDIR /backend
@@ -12,14 +12,14 @@ RUN apt-get update && \
         build-essential \
         netcat-openbsd \
         ca-certificates \
-        && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Installer les dépendances Python
-COPY requirements.txt ./
+# Copier les dépendances Python et les installer
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier le code
+# Copier le code source
 COPY . .
 
-# Commande par défaut : lancer FastAPI
+# Commande par défaut pour démarrer FastAPI (via docker-compose)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

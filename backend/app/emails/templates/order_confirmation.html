@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Merci pour votre commande, {{ user_name }} !</h2>
+
+  <p>Numéro de commande : <b>{{ order_id }}</b></p>
+  <table style="width:100%; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th style="border-bottom:1px solid #ccc; text-align:left;">Produit</th>
+        <th style="border-bottom:1px solid #ccc; text-align:right;">Prix unitaire</th>
+        <th style="border-bottom:1px solid #ccc; text-align:right;">Quantité</th>
+        <th style="border-bottom:1px solid #ccc; text-align:right;">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td style="text-align:right;">{{ "%.2f"|format(item.price) }} €</td>
+        <td style="text-align:right;">{{ item.quantity }}</td>
+        <td style="text-align:right;">{{ "%.2f"|format(item.price * item.quantity) }} €</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p><b>Total commande : {{ "%.2f"|format(total) }} €</b></p>
+
+  <hr>
+  <p>— L’équipe Pierrot</p>
+</body>
+</html>

@@ -4,11 +4,16 @@ from typing import List
 from app import models, schemas
 from app.database import get_db
 from app.auth import get_current_user
+from app.emails.utils import send_email
+from fastapi import BackgroundTasks
 
 router = APIRouter(tags=["Orders"])
 
 @router.post("/", response_model=schemas.OrderPublic)
-def create_order(order_data: schemas.OrderCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def create_order(order_data: schemas.OrderCreate,
+                 background_tasks: BackgroundTasks, 
+                 db: Session = Depends(get_db),
+                 current_user=Depends(get_current_user)):
     if not order_data.items:
         raise HTTPException(status_code=400, detail="Panier vide")
 
@@ -33,6 +38,29 @@ def create_order(order_data: schemas.OrderCreate, db: Session = Depends(get_db),
 
     db.commit()
     db.refresh(order)
+
+    email_items = [
+        {
+            "name": oi.product.name,
+            "price": oi.price,
+            "quantity": oi.quantity
+        }
+        for oi in order.items
+    ]
+
+    background_tasks.add_task(
+        send_email,
+        template_name="order_confirmation.html",
+        to=current_user.email,
+        subject=f"Confirmation de votre commande #{order.id}",
+        context={
+            "user_name": current_user.name,
+            "order_id": order.id,
+            "items": email_items,
+            "total": order.total
+        },
+        background_tasks=background_tasks
+    )
     return db.query(models.Order).options(joinedload(models.Order.items).joinedload(models.OrderItem.product)).filter(models.Order.id==order.id).first()
 
 @router.get("/", response_model=List[schemas.OrderPublic])
